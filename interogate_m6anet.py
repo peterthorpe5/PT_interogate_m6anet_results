@@ -122,70 +122,72 @@ def main():
    # Process each m6A result file
     
     for m6a_file in args.m6a:
-        logger.info("Starting processing: %s", m6a_file)
-        threshold = args.threshold
-
-        methylated_sites = identify_methylated_sites(m6a_file, threshold)
-        # print(methylated_sites)
-
-        # Determine exon/UTR location for each methylation site
-        results = []
-        for index, row in methylated_sites.iterrows():
-            transcript_id = row['transcript_id']
-            position = row['transcript_position']
-            exon_number, total_exons_in_transcript = query_transcript_exon(transcript_dict,
-                                                                            transcript_id, 
-                                                                            position)
-
-            if exon_number is not None:
-                gene_id = transcript_id.split('.')[0]
-                total_exons_in_gene = gene_exon_counts.get(gene_id, 'Unknown')
-                is_last_exon = exon_number == last_exon_for_transcript.get(transcript_id)
-                result = {
-                    'transcript_id': transcript_id,
-                    'position': position,
-                    'exon_number': exon_number,
-                    'total_exons_in_transcript': total_exons_in_transcript,
-                    'total_exons_in_gene': total_exons_in_gene,
-                    'is_last_exon': is_last_exon
-                }
-            else:
-                result = {
-                    'transcript_id': transcript_id,
-                    'position': position,
-                    'exon_number': 'UTR',
-                    'total_exons_in_transcript': total_exons_in_transcript,
-                    'total_exons_in_gene': 'Unknown',
-                    'is_last_exon': False
-                }
-            results.append(result)
-
-        results_df = pd.DataFrame(results)
-        # print(results_df)
-
-        # Print and save the result
-        output_file = f"{os.path.splitext(m6a_file)[0]}_exon_annotated.tab"
-        results_df.to_csv(output_file, index=False, sep="\t")
-        logger.info(f"Results saved to {output_file}")
-
-
-        # plot out the data usage
-        output_plot = f"{os.path.splitext(m6a_file)[0]}_m6a_distribution.pdf"
-        # this does not fail in tests, but some real data it does
-
         try:
-            logger.info(f"Plot saved to {output_plot}")
-            plot_methylation_distribution(results_df, output_plot, transcript_lengths)
-        except Exception as e:
-            logger.error(f"An error occurred while plotting the methylation distribution: {e}")
-        # Continue with the rest of the script
+            logger.info("Starting processing: %s", m6a_file)
+            threshold = args.threshold
 
-        # write out a summary per transcript usage
-        output_summary = f"{os.path.splitext(m6a_file)[0]}_summary_per_transcript.tab"
-        summarize_methylation_sites(results_df, output_summary, logger)
+            methylated_sites = identify_methylated_sites(m6a_file, threshold)
+            # print(methylated_sites)
+
+            # Determine exon/UTR location for each methylation site
+            results = []
+            for index, row in methylated_sites.iterrows():
+                transcript_id = row['transcript_id']
+                position = row['transcript_position']
+                exon_number, total_exons_in_transcript = query_transcript_exon(transcript_dict,
+                                                                                transcript_id, 
+                                                                                position)
+
+                if exon_number is not None:
+                    gene_id = transcript_id.split('.')[0]
+                    total_exons_in_gene = gene_exon_counts.get(gene_id, 'Unknown')
+                    is_last_exon = exon_number == last_exon_for_transcript.get(transcript_id)
+                    result = {
+                        'transcript_id': transcript_id,
+                        'position': position,
+                        'exon_number': exon_number,
+                        'total_exons_in_transcript': total_exons_in_transcript,
+                        'total_exons_in_gene': total_exons_in_gene,
+                        'is_last_exon': is_last_exon}
+                else:
+                    result = {
+                        'transcript_id': transcript_id,
+                        'position': position,
+                        'exon_number': 'UTR',
+                        'total_exons_in_transcript': total_exons_in_transcript,
+                        'total_exons_in_gene': 'Unknown',
+                        'is_last_exon': False}
+                results.append(result)
+
+            results_df = pd.DataFrame(results)
+            # print(results_df)
+
+            # Print and save the result
+            output_file = f"{os.path.splitext(m6a_file)[0]}_exon_annotated.tab"
+            results_df.to_csv(output_file, index=False, sep="\t")
+            logger.info(f"Results saved to {output_file}")
+
+
+            # plot out the data usage
+            output_plot = f"{os.path.splitext(m6a_file)[0]}_m6a_distribution.pdf"
+            # this does not fail in tests, but some real data it does
+
+            try:
+                logger.info(f"Plot saved to {output_plot}")
+                plot_methylation_distribution(results_df, output_plot, transcript_lengths)
+            except Exception as e:
+                logger.error(f"An error occurred while plotting the methylation distribution: {e}")
+            # Continue with the rest of the script
+
+            # write out a summary per transcript usage
+            output_summary = f"{os.path.splitext(m6a_file)[0]}_summary_per_transcript.tab"
+            summarize_methylation_sites(results_df, output_summary, logger)
         
 
-    logger.info("Processing finished: %s", time.asctime())
+            logger.info("Processing finished: %s", time.asctime())
+        except Exception as m6a_file_e:
+            logger.error(f"An error occurred while processing the file {m6a_file}: {m6a_file_e}")
+            continue  # Skip to the next file
 
 if __name__ == '__main__':
     main()
