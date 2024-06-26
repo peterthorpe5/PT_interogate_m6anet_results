@@ -16,6 +16,10 @@ import numpy as np
 # A p-value of 1.0 indicates that there is no evidence to reject the null hypothesis, 
 
 
+import pandas as pd
+from scipy.stats import chi2_contingency
+import numpy as np
+
 def benjamini_hochberg(p_values):
     """
     Apply the Benjamini-Hochberg correction for multiple hypothesis testing.
@@ -117,15 +121,34 @@ def summarize_methylation_sites(results_df, output_file, logger):
         'mean_sites_per_transcript': summary['total_sites'].mean(),
         'median_sites_per_transcript': summary['total_sites'].median(),
         'std_sites_per_transcript': summary['total_sites'].std(),
-        'min_sites_per_transcript': summary['total_sites'].min(),
         'max_sites_per_transcript': summary['total_sites'].max(),
         'mean_ratio_non_last_to_last_and_utr': summary['ratio_non_last_to_last_and_utr'].mean(),
         'median_ratio_non_last_to_last_and_utr': summary['ratio_non_last_to_last_and_utr'].median(),
-        'std_ratio_non_last_to_last_and_utr': summary['ratio_non_last_to_last_and_utr'].std()
+        'std_ratio_non_last_to_last_and_utr': summary['ratio_non_last_to_last_and_utr'].std(),
+        'total_non_last_exon_sites': summary['non_last_exon_sites'].sum(),
+        'mean_non_last_exon_sites': summary['non_last_exon_sites'].mean(),
+        'median_non_last_exon_sites': summary['non_last_exon_sites'].median(),
+        'std_non_last_exon_sites': summary['non_last_exon_sites'].std(),
+        'max_non_last_exon_sites': summary['non_last_exon_sites'].max(),
+        'total_last_exon_sites': summary['last_exon_sites'].sum(),
+        'mean_last_exon_sites': summary['last_exon_sites'].mean(),
+        'median_last_exon_sites': summary['last_exon_sites'].median(),
+        'std_last_exon_sites': summary['last_exon_sites'].std(),
+        'max_last_exon_sites': summary['last_exon_sites'].max(),
+        'total_utr_sites': summary['utr_sites'].sum(),
+        'mean_utr_sites': summary['utr_sites'].mean(),
+        'median_utr_sites': summary['utr_sites'].median(),
+        'std_utr_sites': summary['utr_sites'].std(),
+        'max_utr_sites': summary['utr_sites'].max()
     }
 
     overall_summary_df = pd.DataFrame([overall_summary])
     output_summary_file = output_file + ".overall.summary"
     overall_summary_df.to_csv(output_summary_file, index=False, sep="\t")
     logger.info(f"Overall summary saved to {output_summary_file}")
-    print(overall_summary_df)
+    logger.info(overall_summary_df)
+
+# Example usage
+# results_df = pd.DataFrame(results)  # Assuming 'results' is the list of result dictionaries
+# output_summary = 'methylation_summary.txt'
+# summarize_methylation_sites(results_df, output_summary, logger)
