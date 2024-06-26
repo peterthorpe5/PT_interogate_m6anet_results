@@ -16,7 +16,6 @@ import numpy as np
 # A p-value of 1.0 indicates that there is no evidence to reject the null hypothesis, 
 
 
-
 def benjamini_hochberg(p_values):
     """
     Apply the Benjamini-Hochberg correction for multiple hypothesis testing.
@@ -54,12 +53,14 @@ def summarize_methylation_sites(results_df, output_file, logger):
     summary = results_df.groupby('transcript_id').apply(lambda df: pd.Series({
         'total_sites': len(df),
         'non_last_exon_sites': len(df[(df['exon_number'] != 'UTR') & (df['is_last_exon'] == False)]),
+        'last_exon_sites': len(df[df['is_last_exon'] == True]),
+        'utr_sites': len(df[df['exon_number'] == 'UTR']),
         'last_exon_and_utr_sites': len(df[(df['exon_number'] == 'UTR') | (df['is_last_exon'] == True)])
     })).reset_index()
 
     # Calculate ratios for each transcript
     summary['ratio_non_last_to_last_and_utr'] = summary.apply(
-        lambda row: row['non_last_exon_sites'] / row['last_exon_and_utr_sites'] if row['last_exon_and_utr_sites'] != 0 else float('inf'),
+        lambda row: row['non_last_exon_sites'] / row['last_exon_and_utr_sites'] if row['last_exon_and_utr_sites'] != 0 else 0,
         axis=1
     )
 
@@ -109,8 +110,22 @@ def summarize_methylation_sites(results_df, output_file, logger):
     # Print the summary DataFrame for visual confirmation
     print(summary)
 
+    # Generate overall summary statistics
+    overall_summary = {
+        'total_transcripts': len(summary),
+        'total_sites': summary['total_sites'].sum(),
+        'mean_sites_per_transcript': summary['total_sites'].mean(),
+        'median_sites_per_transcript': summary['total_sites'].median(),
+        'std_sites_per_transcript': summary['total_sites'].std(),
+        'min_sites_per_transcript': summary['total_sites'].min(),
+        'max_sites_per_transcript': summary['total_sites'].max(),
+        'mean_ratio_non_last_to_last_and_utr': summary['ratio_non_last_to_last_and_utr'].mean(),
+        'median_ratio_non_last_to_last_and_utr': summary['ratio_non_last_to_last_and_utr'].median(),
+        'std_ratio_non_last_to_last_and_utr': summary['ratio_non_last_to_last_and_utr'].std()
+    }
 
-# Example usage
-# results_df = pd.DataFrame(results)  # Assuming 'results' is the list of result dictionaries
-# output_summary = 'methylation_summary.txt'
-# summarize_methylation_sites(results_df, output_summary, logger)
+    overall_summary_df = pd.DataFrame([overall_summary])
+    output_summary_file = output_file + ".overall.summary"
+    overall_summary_df.to_csv(output_summary_file, index=False, sep="\t")
+    logger.info(f"Overall summary saved to {output_summary_file}")
+    print(overall_summary_df)

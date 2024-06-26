@@ -1,0 +1,9 @@
+INFO: sys.version_info(major=3, minor=10, micro=8, releaselevel='final', serial=0)
+INFO: Command-line: interogate_m6anet.py --m6a data/test.data.site_proba.csv
+INFO: Starting processing: Wed Jun 26 14:50:05 2024
+INFO: Starting processing: /Users/PThorpe001/github_repos/PT_interogate_m6anet_results/data/test.gtf
+INFO: Starting processing: data/test.data.site_proba.csv
+INFO: Results saved to data/test.data.site_proba_exon_annotated.tab
+INFO: Summary saved to data/test.data.site_proba_summary_per_transcript.tab
+INFO: Overall summary saved to data/test.data.site_proba_summary_per_transcript.tab.overall.summary
+INFO: Processing finished: Wed Jun 26 14:50:05 2024
