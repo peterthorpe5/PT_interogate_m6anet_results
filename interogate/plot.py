@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 
+
 def plot_methylation_distribution(results_df, output_file):
     """
     Plot the frequency distribution of methylation sites in non-last exons, last exons, and UTRs.

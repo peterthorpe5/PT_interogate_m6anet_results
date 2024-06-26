@@ -39,7 +39,7 @@ def get_args():
                           default=os.path.join(file_directory, "data", 
                                                "test.site_proba.csv"),
                           type=str,
-                          help="List of m6anet result files to be parsed e.g. --m6a file1.csv file2.csv file3.csv")
+                          help="(data.site_proba.csv) List of m6anet result files to be parsed e.g. --m6a file1.csv file2.csv file3.csv")
  
     optional.add_argument("--thread", dest='threads',
                           action="store", default="1",
@@ -166,7 +166,7 @@ def main():
         # Print and save the result
         output_file = f"{os.path.splitext(m6a_file)[0]}_exon_annotated.tab"
         results_df.to_csv(output_file, index=False, sep="\t")
-        print(f"Results saved to {output_file}")
+        logger.info(f"Results saved to {output_file}")
 
 
         # plot out the data usage
@@ -175,8 +175,8 @@ def main():
 
         # write out a summary per transcript usage
         output_summary = f"{os.path.splitext(m6a_file)[0]}_summary_per_transcript.tab"
-        summarize_methylation_sites(results_df, output_summary)
-
+        summarize_methylation_sites(results_df, output_summary, logger)
+        
 
     logger.info("Processing finished: %s", time.asctime())
 
