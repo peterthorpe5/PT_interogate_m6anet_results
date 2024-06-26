@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+#
+
 import pandas as pd
 from scipy.stats import chi2_contingency
 import numpy as np

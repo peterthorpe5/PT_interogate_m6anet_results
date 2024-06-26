@@ -171,7 +171,12 @@ def main():
 
         # plot out the data usage
         output_plot = f"{os.path.splitext(m6a_file)[0]}_m6a_distribution.pdf"
-        plot_methylation_distribution(results_df, output_plot)
+        # this does not fail in tests, but some real data it does
+        try:
+            plot_methylation_distribution(results_df, output_plot)
+        except Exception as e:
+            logger.error(f"An error occurred while plotting the methylation distribution: {e}")
+        # Continue with the rest of the script
 
         # write out a summary per transcript usage
         output_summary = f"{os.path.splitext(m6a_file)[0]}_summary_per_transcript.tab"
