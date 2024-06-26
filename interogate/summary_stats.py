@@ -54,13 +54,12 @@ def summarize_methylation_sites(results_df, output_file, logger):
     summary = results_df.groupby('transcript_id').apply(lambda df: pd.Series({
         'total_sites': len(df),
         'non_last_exon_sites': len(df[(df['exon_number'] != 'UTR') & (df['is_last_exon'] == False)]),
-        'last_exon_sites': len(df[df['is_last_exon'] == True]),
-        'utr_sites': len(df[df['exon_number'] == 'UTR'])
+        'last_exon_and_utr_sites': len(df[(df['exon_number'] == 'UTR') | (df['is_last_exon'] == True)])
     })).reset_index()
 
     # Calculate ratios for each transcript
-    summary['ratio_non_last_to_last'] = summary.apply(
-        lambda row: row['non_last_exon_sites'] / row['last_exon_sites'] if row['last_exon_sites'] != 0 else float('inf'),
+    summary['ratio_non_last_to_last_and_utr'] = summary.apply(
+        lambda row: row['non_last_exon_sites'] / row['last_exon_and_utr_sites'] if row['last_exon_and_utr_sites'] != 0 else float('inf'),
         axis=1
     )
 
@@ -71,21 +70,19 @@ def summarize_methylation_sites(results_df, output_file, logger):
     # Perform chi-squared test for each transcript
     for index, row in summary.iterrows():
         non_last_exon_sites = row['non_last_exon_sites']
-        last_exon_sites = row['last_exon_sites']
-        utr_sites = row['utr_sites']
+        last_exon_and_utr_sites = row['last_exon_and_utr_sites']
         total_sites = row['total_sites']
         if total_sites == 0:
             continue
 
         # Define observed frequencies
-        observed = [non_last_exon_sites, last_exon_sites, utr_sites]
+        observed = [non_last_exon_sites, last_exon_and_utr_sites]
 
         # Calculate the expected frequencies based on the overall distribution
         expected_non_last_exon = total_sites * (non_last_exon_sites / total_sites)
-        expected_last_exon = total_sites * (last_exon_sites / total_sites)
-        expected_utr = total_sites * (utr_sites / total_sites)
+        expected_last_exon_and_utr = total_sites * (last_exon_and_utr_sites / total_sites)
         
-        expected = [expected_non_last_exon, expected_last_exon, expected_utr]
+        expected = [expected_non_last_exon, expected_last_exon_and_utr]
 
         # Check if expected frequencies have zero elements
         if any(e == 0 for e in expected):
@@ -111,7 +108,6 @@ def summarize_methylation_sites(results_df, output_file, logger):
 
     # Print the summary DataFrame for visual confirmation
     print(summary)
-
 
 
 # Example usage
