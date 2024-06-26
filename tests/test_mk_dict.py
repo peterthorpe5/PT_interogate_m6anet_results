@@ -36,7 +36,7 @@ def query_transcript_exon(transcript_dict, transcript_id, position):
 file_path = 'data/test.gtf'  # Replace with the path to your GFF or GTF file
 features = parse_gff_gft(file_path)
 transcript_dict, transcript_exon_counts, gene_exon_counts, \
-     last_exon_for_transcript = generate_transcript_coordinates(features)
+     last_exon_for_transcript, transcript_lengths = generate_transcript_coordinates(features)
 
 class TestTranscriptDict(unittest.TestCase):
 

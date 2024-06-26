@@ -4,22 +4,21 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-
-
-def plot_methylation_distribution(results_df, output_file):
+def plot_methylation_distribution(results_df, output_file, transcript_lengths):
     """
     Plot the frequency distribution of methylation sites in non-last exons, last exons, and UTRs.
 
     Parameters:
     results_df (DataFrame): DataFrame containing the methylation site annotations.
     output_file (str): Path to the output PDF file for the plot.
+    transcript_lengths (dict): Dictionary mapping transcript IDs to their lengths.
     """
     # Debugging: Print unique values in 'exon_number'
-    #print("Unique values in 'exon_number':", results_df['exon_number'].unique())
+    # print("Unique values in 'exon_number':", results_df['exon_number'].unique())
 
     # Debugging: Print the DataFrame before filtering
-    #print("DataFrame before filtering:")
-    #print(results_df)
+    # print("DataFrame before filtering:")
+    # print(results_df)
 
     # Check if the required columns exist
     if 'exon_number' not in results_df.columns or 'is_last_exon' not in results_df.columns:
@@ -33,7 +32,12 @@ def plot_methylation_distribution(results_df, output_file):
     }
 
     # Debugging: Print category counts
-    #print("Category counts:", category_counts)
+    print("Category counts:", category_counts)
+
+    # Normalize positions by transcript length
+    results_df['normalised_position'] = results_df.apply(
+        lambda row: row['position'] / transcript_lengths[row['transcript_id']], axis=1
+    )
 
     # Create a bar plot
     categories = list(category_counts.keys())
@@ -52,27 +56,14 @@ def plot_methylation_distribution(results_df, output_file):
     results_df['category'] = results_df.apply(
         lambda row: 'last_exon' if row['is_last_exon'] else ('UTR' if row['exon_number'] == 'UTR' else 'non_last_exon'), axis=1
     )
-    sns.violinplot(x='category', y='position', data=results_df, palette=['blue', 'green', 'red'])
+    sns.violinplot(x='category', y='normalised_position', data=results_df, palette=['blue', 'green', 'red'])
     plt.xlabel('Category')
-    plt.ylabel('Position')
-    plt.title('Distribution of Methylation Sites')
-
+    plt.ylabel('Normalised Position')
+    plt.title('Distribution of Methylation Sites (Normalised)')
+    
     plt.tight_layout()
 
     # Save the plot to a PDF file
     plt.savefig(output_file)
     plt.close()
 
-
-
-# Example usage:
-# results_df = pd.read_csv('path_to_your_results.csv')  # Load your results DataFrame
-# output_file = 'output_plot.pdf'
-# plot_methylation_distribution(results_df, output_file)
-
-
-
-# Example usage
-# results_df = pd.DataFrame(results)  # Assuming 'results' is the list of result dictionaries
-# output_file = 'methylation_distribution.pdf'
-# plot_methylation_distribution(results_df, output_file)

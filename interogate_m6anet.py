@@ -108,7 +108,7 @@ def main():
     file_path = args.gtf
     features = parse_gff_gft(file_path)
     transcript_dict, transcript_exon_counts, gene_exon_counts, \
-         last_exon_for_transcript = generate_transcript_coordinates(features)
+         last_exon_for_transcript, transcript_lengths = generate_transcript_coordinates(features)
     
 
 
@@ -172,8 +172,10 @@ def main():
         # plot out the data usage
         output_plot = f"{os.path.splitext(m6a_file)[0]}_m6a_distribution.pdf"
         # this does not fail in tests, but some real data it does
+
         try:
-            plot_methylation_distribution(results_df, output_plot)
+            logger.info(f"Plot saved to {output_plot}")
+            plot_methylation_distribution(results_df, output_plot, transcript_lengths)
         except Exception as e:
             logger.error(f"An error occurred while plotting the methylation distribution: {e}")
         # Continue with the rest of the script

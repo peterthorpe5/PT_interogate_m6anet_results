@@ -25,6 +25,7 @@ def generate_transcript_coordinates(features):
     gene_exon_sets = defaultdict(set)  # Using a set to count unique exons per gene
     nucleotide_counter = defaultdict(int)  # To count the nucleotide positions within exons per transcript
     last_exon_for_transcript = {}
+    transcript_lengths = defaultdict(int)
 
     for feature in features:
         seqname, source, feature_type, start, end, score, strand, frame, attribute = feature
@@ -59,6 +60,7 @@ def generate_transcript_coordinates(features):
                 transcript_dict[transcript_id][exon_number] = exon_positions
                 transcript_exon_counts[transcript_id] += 1
                 gene_exon_sets[gene_id].add(exon_number)
+                transcript_lengths[transcript_id] = nucleotide_counter[transcript_id]
                 
                 # Update last exon for this transcript
                 if transcript_id not in last_exon_for_transcript or exon_number > last_exon_for_transcript[transcript_id]:
@@ -67,7 +69,7 @@ def generate_transcript_coordinates(features):
     # Convert the set of exons per gene to counts
     gene_exon_counts = {gene: len(exons) for gene, exons in gene_exon_sets.items()}
     
-    return transcript_dict, transcript_exon_counts, gene_exon_counts, last_exon_for_transcript
+    return transcript_dict, transcript_exon_counts, gene_exon_counts, last_exon_for_transcript, transcript_lengths
 
 
 def query_transcript_exon(transcript_dict, transcript_id, position):
