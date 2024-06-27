@@ -34,7 +34,8 @@ def normalise_position(row, transcript_lengths, transcript_strands):
     return 0
 
 
-def plot_methylation_distribution(results_df, output_file, transcript_lengths, transcript_strands):
+def plot_methylation_distribution(results_df, output_file, transcript_lengths, 
+                                  transcript_strands, infile_name, logger):
     """
     Plot the frequency distribution of methylation sites in non-last exons, last exons, and UTRs.
 
@@ -63,7 +64,9 @@ def plot_methylation_distribution(results_df, output_file, transcript_lengths, t
     }
 
     # Debugging: Print category counts
-    print("Category counts:", category_counts)
+    out_info = f"{infile_name}\tCategory counts:\t{category_counts}\n"
+    logger.info(out_info)
+    # print("Category counts:", category_counts)
 
     # Normalize positions by transcript length
     results_df['normalised_position'] = results_df.apply(normalise_position, axis=1, transcript_lengths=transcript_lengths, transcript_strands=transcript_strands)

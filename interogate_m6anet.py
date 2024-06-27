@@ -171,6 +171,7 @@ def main():
 
             results_df = pd.DataFrame(results)
             print("Results DataFrame:", results_df)
+            logger.info(results_df)
 
             output_file = f"{os.path.splitext(m6a_file)[0]}_exon_annotated.tab"
             results_df.to_csv(output_file, index=False, sep="\t")
@@ -180,7 +181,8 @@ def main():
             try:
                 logger.info(f"Plot saved to {output_plot}")
                 plot_methylation_distribution(results_df, output_plot, 
-                                              transcript_lengths, transcript_strands)
+                                              transcript_lengths, transcript_strands,
+                                              m6a_file, logger)
             except Exception as e:
                 logger.error(f"An error occurred while plotting the methylation distribution: {e}")
             # Continue with the rest of the script
