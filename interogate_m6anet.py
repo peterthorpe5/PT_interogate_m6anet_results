@@ -171,6 +171,7 @@ def main():
 
             results_df = pd.DataFrame(results)
             print("Results DataFrame:", results_df)
+            logger.info("Results DataFrame: ")
             logger.info(results_df)
 
             output_file = f"{os.path.splitext(m6a_file)[0]}_exon_annotated.tab"
@@ -194,6 +195,7 @@ def main():
         
 
             logger.info("Processing finished: %s", time.asctime())
+            logger.info("#########################################\n")
         except Exception as m6a_file_e:
             logger.error(f"An error occurred while processing the file {m6a_file}: {m6a_file_e}")
             continue  # Skip to the next file
