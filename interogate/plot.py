@@ -5,10 +5,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
-
 def normalise_position(row, transcript_lengths, transcript_strands):
     """
-    Normalize the position by the transcript length, adjusting for strand.
+    Normalize the position by the transcript length.
 
     Parameters:
     row (Series): A row from the DataFrame.
@@ -21,15 +20,14 @@ def normalise_position(row, transcript_lengths, transcript_strands):
     transcript_id = row['transcript_id']
     if transcript_id in transcript_lengths:
         length = transcript_lengths[transcript_id]
-        strand = transcript_strands.get(transcript_id, '+')  # Default to positive strand if not found
+        strand = transcript_strands.get(transcript_id, '+')
         if length != 0:
-            if strand == '-':
-                adjusted_position = length - row['position'] + 1
-            else:
-                adjusted_position = row['position']
-            normalised_position = adjusted_position / length
-            print(f"Transcript ID: {transcript_id}, Position: {row['position']}, Adjusted Position: {adjusted_position}, Length: {length}, normalised Position: {normalised_position}")
-            return normalised_position
+            if strand == '+':
+                normalized_position = row['position'] / length
+            else:  # For negative strand
+                normalized_position = (length - row['position'] + 1) / length
+            print(f"Transcript ID: {transcript_id}, Position: {row['position']}, Length: {length}, Normalized Position: {normalized_position}, Strand: {strand}")
+            return normalized_position
     return 0
 
 
