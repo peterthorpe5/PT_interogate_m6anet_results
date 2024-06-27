@@ -1,14 +1,13 @@
 INFO: sys.version_info(major=3, minor=10, micro=8, releaselevel='final', serial=0)
 INFO: Command-line: interogate_m6anet.py --m6a data/test.data.site_proba.csv
-INFO: Starting processing: Wed Jun 26 16:05:03 2024
+INFO: Starting processing: Thu Jun 27 11:55:30 2024
 INFO: Starting processing: /Users/PThorpe001/github_repos/PT_interogate_m6anet_results/data/test.gtf
 INFO: Starting processing: data/test.data.site_proba.csv
-INFO: Results saved to data/test.data.site_proba_exon_annotated.tab
 INFO: Plot saved to data/test.data.site_proba_m6a_distribution.pdf
 INFO: Summary saved to data/test.data.site_proba_summary_per_transcript.tab
 INFO: Overall summary saved to data/test.data.site_proba_summary_per_transcript.tab.overall.summary
-INFO:    total_transcripts  total_sites  mean_sites_per_transcript  ...  median_utr_sites  std_utr_sites  max_utr_sites
-0                  2            5                        2.5  ...               0.5       0.707107              1
+INFO:    total_transcripts  total_sites  mean_sites_per_transcript  median_sites_per_transcript  std_sites_per_transcript  ...  total_utr_sites  mean_utr_sites  median_utr_sites  std_utr_sites  max_utr_sites
+0                  6           10                   1.666667                          1.5                  0.816497  ...                2        0.333333               0.0       0.516398              1
 
 [1 rows x 24 columns]
-INFO: Processing finished: Wed Jun 26 16:05:03 2024
+INFO: Processing finished: Thu Jun 27 11:55:31 2024

@@ -1,6 +1,19 @@
 #!/usr/bin/env python3
 
 
+def test_line(line):
+    """returns true lines. Not comments or blank line"""
+    if not line.strip():
+        return False  # if the last line is blank
+    if line.startswith("#"):
+        return False  # comment line
+    if line.startswith("    # "):  # swarm result file
+        return False  # comment line
+    if line.startswith("		p"):
+        return False  # comment line
+    return line.rstrip()
+
+
 def parse_gff_gft(file_path):
     """
     Parse a GFF/GTF file and return a list of features.
@@ -16,9 +29,10 @@ def parse_gff_gft(file_path):
     with open(file_path, 'r', encoding='utf-8', errors='ignore') as file:
         for line in file:
             # Skip comment lines
-            if line.startswith('#'):
+            if not test_line(line):
                 continue
-            
+            line = test_line(line)
+           
             # Split the line into fields
             fields = line.strip().split('\t')
             

@@ -4,6 +4,7 @@
 
 import pandas as pd
 
+
 def identify_methylated_sites(m6a_site_proba, threshold=0.9):
     """
     Identify methylated sites with probability greater than the threshold.
@@ -30,27 +31,6 @@ def identify_methylated_sites(m6a_site_proba, threshold=0.9):
     result = methylated_sites[['transcript_id', 'transcript_position']]
     return result
 
-
-
-def query_transcript_exon(transcript_dict, transcript_id, position):
-    """
-    Query the exon and total number of exons for a given transcript ID and coordinate.
-
-    Parameters:
-    transcript_dict (dict): A nested dictionary mapping each transcript ID to a dictionary of exons,
-                            where each exon maps to a list of nucleotide positions.
-    transcript_id (str): The ID of the transcript to query.
-    position (int): The nucleotide position to query.
-
-    Returns:
-    tuple: The exon number that the coordinate belongs to and the total number of exons for the transcript.
-    """
-    if transcript_id in transcript_dict:
-        for exon_number, coordinates in transcript_dict[transcript_id].items():
-            if position in coordinates:
-                total_exons = len(transcript_dict[transcript_id])
-                return exon_number, total_exons
-    return None, None
 
 
 

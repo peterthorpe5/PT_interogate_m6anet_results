@@ -1,6 +1,11 @@
 transcript_id	position	exon_number	total_exons_in_transcript	total_exons_in_gene	is_last_exon
-TEST.1	5	1	3.0	3	False
-TEST.1	25	3	3.0	3	True
-TEST.1	52	UTR		Unknown	False
+TEST_neg_last_exon.1	5	3	3.0	3	True
+TEST_neg.1	5	1	1.0	1	True
+TEST_neg.1	50	UTR		1	False
+TEST_1_3_UTR.1	5	1	3.0	3	False
+TEST_1_3_UTR.1	25	3	3.0	3	True
+TEST_1_3_UTR.1	52	UTR		3	False
+TEST_exon1.1	100	1	3.0	3	False
+TEST_last_exon.1	1048	3	2.0	2	True
 AT1G01100.2	475	7	4.0	10	False
 AT1G01100.2	525	7	4.0	10	False

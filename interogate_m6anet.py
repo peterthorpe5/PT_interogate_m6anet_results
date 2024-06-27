@@ -15,8 +15,8 @@ import argparse
 import matplotlib.pyplot as plt
 import pandas as pd
 from interogate.parse_gtf import parse_gff_gft
-from interogate.return_dict import generate_transcript_coordinates
-from interogate.parse_m6a_site_proba import identify_methylated_sites, query_transcript_exon
+from interogate.return_dict import generate_transcript_coordinates, query_transcript_exon
+from interogate.parse_m6a_site_proba import identify_methylated_sites
 from interogate.plot import plot_methylation_distribution
 from interogate.summary_stats import summarize_methylation_sites
 
@@ -122,55 +122,59 @@ def main():
    # Process each m6A result file
     
     for m6a_file in args.m6a:
+        #print("Transcript Dictionary:", transcript_dict)
+        print("Exon Counts per Transcript:", transcript_exon_counts)
+        print("Gene Exon Counts:", gene_exon_counts)
+        print("Last Exon for Each Transcript:", last_exon_for_transcript)
+        print("Transcript Lengths:", transcript_lengths)
+
         try:
             logger.info("Starting processing: %s", m6a_file)
             threshold = args.threshold
-
+            # Identify methylated sites
             methylated_sites = identify_methylated_sites(m6a_file, threshold)
-            # print(methylated_sites)
 
-            # Determine exon/UTR location for each methylation site
+            # Filter out invalid transcripts
+            valid_transcripts = set(transcript_dict.keys())
+            methylated_sites = methylated_sites[methylated_sites['transcript_id'].isin(valid_transcripts)]
+            if methylated_sites.empty:
+                logger.warning(f"No valid methylated sites after filtering for file: {m6a_file}")
+                continue
+        
+            # Annotate the sites
             results = []
             for index, row in methylated_sites.iterrows():
                 transcript_id = row['transcript_id']
                 position = row['transcript_position']
-                exon_number, total_exons_in_transcript = query_transcript_exon(transcript_dict,
-                                                                                transcript_id, 
-                                                                                position)
-
+                exon_number, total_exons = query_transcript_exon(transcript_dict, transcript_id, position)
+                is_last_exon = (exon_number == last_exon_for_transcript.get(transcript_id, None))
                 if exon_number is not None:
-                    gene_id = transcript_id.split('.')[0]
-                    total_exons_in_gene = gene_exon_counts.get(gene_id, 'Unknown')
-                    is_last_exon = exon_number == last_exon_for_transcript.get(transcript_id)
                     result = {
                         'transcript_id': transcript_id,
                         'position': position,
                         'exon_number': exon_number,
-                        'total_exons_in_transcript': total_exons_in_transcript,
-                        'total_exons_in_gene': total_exons_in_gene,
-                        'is_last_exon': is_last_exon}
+                        'total_exons_in_transcript': total_exons,
+                        'total_exons_in_gene': gene_exon_counts.get(transcript_id.split('.')[0], 'Unknown'),
+                        'is_last_exon': is_last_exon
+                    }
                 else:
                     result = {
                         'transcript_id': transcript_id,
                         'position': position,
                         'exon_number': 'UTR',
-                        'total_exons_in_transcript': total_exons_in_transcript,
-                        'total_exons_in_gene': 'Unknown',
-                        'is_last_exon': False}
+                        'total_exons_in_transcript': total_exons,
+                        'total_exons_in_gene': gene_exon_counts.get(transcript_id.split('.')[0], 'Unknown'),
+                        'is_last_exon': False
+                    }
                 results.append(result)
 
             results_df = pd.DataFrame(results)
-            # print(results_df)
+            print("Results DataFrame:", results_df)
 
-            # Print and save the result
             output_file = f"{os.path.splitext(m6a_file)[0]}_exon_annotated.tab"
             results_df.to_csv(output_file, index=False, sep="\t")
-            logger.info(f"Results saved to {output_file}")
-
-
-            # plot out the data usage
+            print(f"Results saved to {output_file}")
             output_plot = f"{os.path.splitext(m6a_file)[0]}_m6a_distribution.pdf"
-            # this does not fail in tests, but some real data it does
 
             try:
                 logger.info(f"Plot saved to {output_plot}")

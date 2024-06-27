@@ -4,6 +4,29 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+
+
+def normalise_position(row, transcript_lengths):
+    """
+    normalise the position by the transcript length.
+
+    Parameters:
+    row (Series): A row from the DataFrame.
+    transcript_lengths (dict): Dictionary mapping transcript IDs to their lengths.
+
+    Returns:
+    float: normalised position.
+    """
+    transcript_id = row['transcript_id']
+    if transcript_id in transcript_lengths:
+        length = transcript_lengths[transcript_id]
+        if length != 0:
+            normalised_position = row['position'] / length
+            print(f"Transcript ID: {transcript_id}, Position: {row['position']}, Length: {length}, normalised Position: {normalised_position}")
+            return normalised_position
+    return 0
+
+
 def plot_methylation_distribution(results_df, output_file, transcript_lengths):
     """
     Plot the frequency distribution of methylation sites in non-last exons, last exons, and UTRs.
@@ -14,11 +37,11 @@ def plot_methylation_distribution(results_df, output_file, transcript_lengths):
     transcript_lengths (dict): Dictionary mapping transcript IDs to their lengths.
     """
     # Debugging: Print unique values in 'exon_number'
-    # print("Unique values in 'exon_number':", results_df['exon_number'].unique())
+    print("Unique values in 'exon_number':", results_df['exon_number'].unique())
 
     # Debugging: Print the DataFrame before filtering
-    # print("DataFrame before filtering:")
-    # print(results_df)
+    print("DataFrame before filtering:")
+    print(results_df)
 
     # Check if the required columns exist
     if 'exon_number' not in results_df.columns or 'is_last_exon' not in results_df.columns:
@@ -34,10 +57,8 @@ def plot_methylation_distribution(results_df, output_file, transcript_lengths):
     # Debugging: Print category counts
     print("Category counts:", category_counts)
 
-    # Normalize positions by transcript length
-    results_df['normalised_position'] = results_df.apply(
-        lambda row: row['position'] / transcript_lengths[row['transcript_id']], axis=1
-    )
+    # normalise positions by transcript length
+    results_df['normalised_position'] = results_df.apply(normalise_position, axis=1, transcript_lengths=transcript_lengths)
 
     # Create a bar plot
     categories = list(category_counts.keys())
@@ -54,16 +75,14 @@ def plot_methylation_distribution(results_df, output_file, transcript_lengths):
     # Create a violin plot
     plt.subplot(1, 2, 2)  # Create subplot for violin plot
     results_df['category'] = results_df.apply(
-        lambda row: 'last_exon' if row['is_last_exon'] else ('UTR' if row['exon_number'] == 'UTR' else 'non_last_exon'), axis=1
-    )
+        lambda row: 'last_exon' if row['is_last_exon'] else ('UTR' if row['exon_number'] == 'UTR' else 'non_last_exon'), axis=1)
     sns.violinplot(x='category', y='normalised_position', data=results_df, palette=['blue', 'green', 'red'])
     plt.xlabel('Category')
-    plt.ylabel('Normalised Position')
-    plt.title('Distribution of Methylation Sites (Normalised)')
+    plt.ylabel('normalised Position')
+    plt.title('Distribution of Methylation Sites (normalised)')
     
     plt.tight_layout()
 
     # Save the plot to a PDF file
     plt.savefig(output_file)
     plt.close()
-
