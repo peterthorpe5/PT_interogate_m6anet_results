@@ -18,9 +18,9 @@ def normalise_position(row, transcript_lengths, transcript_strands):
     float: normalised position.
     """
     transcript_id = row['transcript_id']
-    print("heeerrrrree:")
-    print(transcript_lengths)
-    print(transcript_lengths[transcript_id])
+    # print("heeerrrrree:")
+    # print(transcript_lengths)
+    # print(transcript_lengths[transcript_id])
     if transcript_id in transcript_lengths:
         length = transcript_lengths[transcript_id]
         strand = transcript_strands.get(transcript_id, '+')
@@ -29,7 +29,7 @@ def normalise_position(row, transcript_lengths, transcript_strands):
                 normalised_position = row['position'] / length
             else:  # For negative strand
                 normalised_position = (length - row['position'] + 1) / length
-            print(f"Transcript ID: {transcript_id}, Position: {row['position']}, Length: {length}, normalised Position: {normalised_position}, Strand: {strand}")
+            # print(f"Transcript ID: {transcript_id}, Position: {row['position']}, Length: {length}, normalised Position: {normalised_position}, Strand: {strand}")
             return normalised_position
     return 0
 
