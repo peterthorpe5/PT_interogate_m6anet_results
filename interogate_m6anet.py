@@ -122,11 +122,12 @@ def main():
    # Process each m6A result file
     
     for m6a_file in args.m6a:
-        #print("Transcript Dictionary:", transcript_dict)
-        print("Exon Counts per Transcript:", transcript_exon_counts)
-        print("Gene Exon Counts:", gene_exon_counts)
-        print("Last Exon for Each Transcript:", last_exon_for_transcript)
-        print("Transcript Lengths:", transcript_lengths)
+        # These were used in testing - useful. but not for real data. 
+        # print("Transcript Dictionary:", transcript_dict)
+        # print("Exon Counts per Transcript:", transcript_exon_counts)
+        # print("Gene Exon Counts:", gene_exon_counts)
+        ## print("Last Exon for Each Transcript:", last_exon_for_transcript)
+        # print("Transcript Lengths:", transcript_lengths)
 
         try:
             logger.info("Starting processing: %s", m6a_file)
