@@ -1,8 +1,9 @@
 INFO: sys.version_info(major=3, minor=10, micro=8, releaselevel='final', serial=0)
 INFO: Command-line: interogate_m6anet.py --m6a data/test.data.site_proba.csv
-INFO: Starting processing: Thu Jun 27 14:16:20 2024
+INFO: Starting processing: Thu Jun 27 15:13:27 2024
 INFO: Starting processing: /Users/PThorpe001/github_repos/PT_interogate_m6anet_results/data/test.gtf
 INFO: Starting processing: data/test.data.site_proba.csv
+INFO: Results DataFrame: 
 INFO:           transcript_id  position exon_number  total_exons_in_transcript  total_exons_in_gene  is_last_exon
 0  TEST_neg_last_exon.1         5           3                        3.0                    3          True
 1            TEST_neg.1         5           1                        1.0                    1          True
@@ -44,4 +45,6 @@ INFO:                                 Statistic      Value
 21                       median_utr_sites   0.000000
 22                          std_utr_sites   0.516398
 23                          max_utr_sites   1.000000
-INFO: Processing finished: Thu Jun 27 14:16:21 2024
+INFO: Processing finished: Thu Jun 27 15:13:27 2024
+INFO: #########################################
+
