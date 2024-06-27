@@ -6,28 +6,34 @@ import seaborn as sns
 
 
 
-def normalise_position(row, transcript_lengths):
+def normalise_position(row, transcript_lengths, transcript_strands):
     """
-    normalise the position by the transcript length.
+    Normalize the position by the transcript length, adjusting for strand.
 
     Parameters:
     row (Series): A row from the DataFrame.
     transcript_lengths (dict): Dictionary mapping transcript IDs to their lengths.
+    transcript_strands (dict): Dictionary mapping transcript IDs to their strands.
 
     Returns:
-    float: normalised position.
+    float: Normalized position.
     """
     transcript_id = row['transcript_id']
     if transcript_id in transcript_lengths:
         length = transcript_lengths[transcript_id]
+        strand = transcript_strands.get(transcript_id, '+')  # Default to positive strand if not found
         if length != 0:
-            normalised_position = row['position'] / length
-            print(f"Transcript ID: {transcript_id}, Position: {row['position']}, Length: {length}, normalised Position: {normalised_position}")
+            if strand == '-':
+                adjusted_position = length - row['position'] + 1
+            else:
+                adjusted_position = row['position']
+            normalised_position = adjusted_position / length
+            print(f"Transcript ID: {transcript_id}, Position: {row['position']}, Adjusted Position: {adjusted_position}, Length: {length}, normalised Position: {normalised_position}")
             return normalised_position
     return 0
 
 
-def plot_methylation_distribution(results_df, output_file, transcript_lengths):
+def plot_methylation_distribution(results_df, output_file, transcript_lengths, transcript_strands):
     """
     Plot the frequency distribution of methylation sites in non-last exons, last exons, and UTRs.
 
@@ -35,6 +41,7 @@ def plot_methylation_distribution(results_df, output_file, transcript_lengths):
     results_df (DataFrame): DataFrame containing the methylation site annotations.
     output_file (str): Path to the output PDF file for the plot.
     transcript_lengths (dict): Dictionary mapping transcript IDs to their lengths.
+    transcript_strands (dict): Dictionary mapping transcript IDs to their strands.
     """
     # Debugging: Print unique values in 'exon_number'
     print("Unique values in 'exon_number':", results_df['exon_number'].unique())
@@ -57,8 +64,8 @@ def plot_methylation_distribution(results_df, output_file, transcript_lengths):
     # Debugging: Print category counts
     print("Category counts:", category_counts)
 
-    # normalise positions by transcript length
-    results_df['normalised_position'] = results_df.apply(normalise_position, axis=1, transcript_lengths=transcript_lengths)
+    # Normalize positions by transcript length
+    results_df['normalised_position'] = results_df.apply(normalise_position, axis=1, transcript_lengths=transcript_lengths, transcript_strands=transcript_strands)
 
     # Create a bar plot
     categories = list(category_counts.keys())
@@ -78,7 +85,7 @@ def plot_methylation_distribution(results_df, output_file, transcript_lengths):
         lambda row: 'last_exon' if row['is_last_exon'] else ('UTR' if row['exon_number'] == 'UTR' else 'non_last_exon'), axis=1)
     sns.violinplot(x='category', y='normalised_position', data=results_df, palette=['blue', 'green', 'red'])
     plt.xlabel('Category')
-    plt.ylabel('normalised Position')
+    plt.ylabel('Normalised Position')
     plt.title('Distribution of Methylation Sites (normalised)')
     
     plt.tight_layout()

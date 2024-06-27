@@ -25,6 +25,7 @@ def generate_transcript_coordinates(features):
     nucleotide_counter = defaultdict(int)
     last_exon_for_transcript = {}
     transcript_lengths = defaultdict(int)
+    transcript_strands = defaultdict(str)
 
     for feature in features:
         seqname, source, feature_type, start, end, score, strand, frame, attribute = feature
@@ -36,6 +37,7 @@ def generate_transcript_coordinates(features):
             for attr in attributes:
                 if 'Parent' in attr:
                     transcript_id = attr.split('=')[1].strip() if '=' in attr else attr.split()[1].strip().strip('"')
+                    transcript_strands[transcript_id] = strand
                 if 'ID' in attr:
                     exon_match = re.search(r'exon:(\d+)', attr)
                     if exon_match:
@@ -64,7 +66,8 @@ def generate_transcript_coordinates(features):
     trans_exon_counts = {trans: len(exons) for trans, exons in transcript_exon_sets.items()}
     last_exon_for_transcript = {trans: max(exons) for trans, exons in transcript_exon_sets.items() if exons}
 
-    return transcript_dict, trans_exon_counts, gene_exon_counts, last_exon_for_transcript, transcript_lengths
+    return transcript_dict, trans_exon_counts, gene_exon_counts, \
+          last_exon_for_transcript, transcript_lengths, transcript_strands
 
 
 
