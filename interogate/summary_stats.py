@@ -145,7 +145,8 @@ def summarize_methylation_sites(results_df, output_file, logger):
         'max_utr_sites': summary['utr_sites'].max()
     }
 
-    overall_summary_df = pd.DataFrame([overall_summary])
+    overall_summary_df = pd.DataFrame(overall_summary.items(), columns=['Statistic', 'Value'])
+
     output_summary_file = output_file + ".overall.summary"
     overall_summary_df.to_csv(output_summary_file, index=False, sep="\t")
     logger.info(f"Overall summary saved to {output_summary_file}")

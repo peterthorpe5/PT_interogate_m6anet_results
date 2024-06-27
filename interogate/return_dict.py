@@ -61,10 +61,13 @@ def generate_transcript_coordinates(features):
 
                 if transcript_id not in last_exon_for_transcript or exon_number > last_exon_for_transcript[transcript_id]:
                     last_exon_for_transcript[transcript_id] = exon_number
+                transcript_lengths[transcript_id] = max(transcript_lengths[transcript_id], nucleotide_counter[transcript_id])
+
 
     gene_exon_counts = {gene: len(exons) for gene, exons in gene_exon_sets.items()}
     trans_exon_counts = {trans: len(exons) for trans, exons in transcript_exon_sets.items()}
     last_exon_for_transcript = {trans: max(exons) for trans, exons in transcript_exon_sets.items() if exons}
+
 
     return transcript_dict, trans_exon_counts, gene_exon_counts, \
           last_exon_for_transcript, transcript_lengths, transcript_strands

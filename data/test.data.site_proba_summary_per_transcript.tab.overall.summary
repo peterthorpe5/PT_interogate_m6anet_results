@@ -1,2 +1,25 @@
-total_transcripts	total_sites	mean_sites_per_transcript	median_sites_per_transcript	std_sites_per_transcript	max_sites_per_transcript	mean_ratio_non_last_to_last_and_utr	median_ratio_non_last_to_last_and_utr	std_ratio_non_last_to_last_and_utr	total_non_last_exon_sites	mean_non_last_exon_sites	median_non_last_exon_sites	std_non_last_exon_sites	max_non_last_exon_sites	total_last_exon_sites	mean_last_exon_sites	median_last_exon_sites	std_last_exon_sites	max_last_exon_sites	total_utr_sites	mean_utr_sites	median_utr_sites	std_utr_sites	max_utr_sites
-6	10	1.6666666666666667	1.5	0.816496580927726	3	0.08333333333333333	0.0	0.2041241452319315	4	0.6666666666666666	0.5	0.816496580927726	2	4	0.6666666666666666	1.0	0.5163977794943223	1	2	0.3333333333333333	0.0	0.5163977794943223	1
+Statistic	Value
+total_transcripts	6.0
+total_sites	10.0
+mean_sites_per_transcript	1.6666666666666667
+median_sites_per_transcript	1.5
+std_sites_per_transcript	0.816496580927726
+max_sites_per_transcript	3.0
+mean_ratio_non_last_to_last_and_utr	0.08333333333333333
+median_ratio_non_last_to_last_and_utr	0.0
+std_ratio_non_last_to_last_and_utr	0.2041241452319315
+total_non_last_exon_sites	4.0
+mean_non_last_exon_sites	0.6666666666666666
+median_non_last_exon_sites	0.5
+std_non_last_exon_sites	0.816496580927726
+max_non_last_exon_sites	2.0
+total_last_exon_sites	4.0
+mean_last_exon_sites	0.6666666666666666
+median_last_exon_sites	1.0
+std_last_exon_sites	0.5163977794943223
+max_last_exon_sites	1.0
+total_utr_sites	2.0
+mean_utr_sites	0.3333333333333333
+median_utr_sites	0.0
+std_utr_sites	0.5163977794943223
+max_utr_sites	1.0
