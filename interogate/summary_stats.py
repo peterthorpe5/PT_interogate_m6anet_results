@@ -47,7 +47,7 @@ def benjamini_hochberg(p_values):
     
     return adjusted_p_values
 
-def summarize_methylation_sites(results_df, output_file, logger):
+def summarise_methylation_sites(results_df, output_file, logger):
     """
     Summarize the number of methylation sites per transcript and perform statistical comparison.
 

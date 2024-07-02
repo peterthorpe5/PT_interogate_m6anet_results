@@ -10,6 +10,8 @@ import unittest
 from interogate.parse_gtf import parse_gff_gft
 from interogate.return_dict import generate_transcript_coordinates
 from interogate.tools import NotExecutableError
+from interogate.parse_trans_len import parse_transcript_lengths
+
 
 # Ensure the `query_transcript_exon` function is defined
 def query_transcript_exon(transcript_dict, transcript_id, position):
@@ -35,8 +37,13 @@ def query_transcript_exon(transcript_dict, transcript_id, position):
 # get the data and the dict
 file_path = 'data/test.gtf'  # Replace with the path to your GFF or GTF file
 features = parse_gff_gft(file_path)
+
+
+ # get the transcript lenghts
+transcript_lengths = parse_transcript_lengths('data/Araport11_genes.201606.cdna.len')
+
 transcript_dict, transcript_exon_counts, gene_exon_counts, last_exon_for_transcript, \
-                transcript_lengths, transcript_strands = generate_transcript_coordinates(features)
+        transcript_strands = generate_transcript_coordinates(features, transcript_lengths)
 
 
 class TestTranscriptDict(unittest.TestCase):
@@ -66,7 +73,7 @@ class TestTranscriptDict(unittest.TestCase):
 
 
     def test_dict_2(self):
-        """Test 2: AT1G01020.4 at pos 426 should be exon 4. Should have 7 exons."""
+        """Test 2: AT1G01020.4 at pos 426 should be exon 7. Should have 7 exons."""
         query_transcript = "AT1G01020.4"
         query_position = 426
         exon_number, total_exons = query_transcript_exon(transcript_dict, query_transcript, query_position)
@@ -76,11 +83,12 @@ class TestTranscriptDict(unittest.TestCase):
             print(f'Transcript {query_transcript} has {total_exons} exons.')
         else:
             print(f'Position {query_position} is not found in transcript {query_transcript}.')
-        self.assertEqual(exon_number, 10)
+        self.assertEqual(exon_number, 7)
         self.assertEqual(total_exons, transcript_exon_counts[query_transcript])
 
+# UTR
     def test_dict_3(self):
-        """Test 3: AT1G01020.4 at pos 860 should be exon 6. Should have 7 exons. NEGATIVE CODING GENE. DIFF TRANSCRIPT"""
+        """Test 3: AT1G01020.4 at pos 860 should be UTR. Should have 7 exons in the tans but 12 in the gene. NEGATIVE CODING GENE. DIFF TRANSCRIPT"""
         query_transcript = "AT1G01020.4"
         query_position = 860
         exon_number, total_exons = query_transcript_exon(transcript_dict, query_transcript, query_position)
@@ -90,7 +98,7 @@ class TestTranscriptDict(unittest.TestCase):
             print(f'Transcript {query_transcript} has {total_exons} exons.')
         else:
             print(f'Position {query_position} is not found in transcript {query_transcript}.')
-        self.assertEqual(exon_number, 6)
+        self.assertEqual(exon_number, "UTR")
         self.assertEqual(total_exons, transcript_exon_counts[query_transcript])
 
 

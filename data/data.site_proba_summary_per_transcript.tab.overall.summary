@@ -1,0 +1,25 @@
+Statistic	Value
+total_transcripts	1.0
+total_sites	2.0
+mean_sites_per_transcript	2.0
+median_sites_per_transcript	2.0
+std_sites_per_transcript	
+max_sites_per_transcript	2.0
+mean_ratio_non_last_to_last_and_utr	0.0
+median_ratio_non_last_to_last_and_utr	0.0
+std_ratio_non_last_to_last_and_utr	
+total_non_last_exon_sites	0.0
+mean_non_last_exon_sites	0.0
+median_non_last_exon_sites	0.0
+std_non_last_exon_sites	
+max_non_last_exon_sites	0.0
+total_last_exon_sites	0.0
+mean_last_exon_sites	0.0
+median_last_exon_sites	0.0
+std_last_exon_sites	
+max_last_exon_sites	0.0
+total_utr_sites	2.0
+mean_utr_sites	2.0
+median_utr_sites	2.0
+std_utr_sites	
+max_utr_sites	2.0

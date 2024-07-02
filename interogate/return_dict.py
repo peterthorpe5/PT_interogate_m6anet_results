@@ -4,13 +4,15 @@ from collections import defaultdict
 import re
 
 
-def generate_transcript_coordinates(features):
+
+def generate_transcript_coordinates(features, transcript_lengths):
     """
     Generate transcript coordinates with continuous nucleotide positions for exons.
     Also, mark the last exon for each transcript.
 
     Parameters:
     features (list): A list of tuples, each containing the fields of a feature.
+    transcript_lengths (dict): A dictionary mapping transcript IDs to their lengths.
 
     Returns:
     tuple: A nested dictionary mapping each transcript ID to a dictionary of exons,
@@ -22,15 +24,14 @@ def generate_transcript_coordinates(features):
     transcript_dict = defaultdict(lambda: defaultdict(list))
     transcript_exon_sets = defaultdict(set)
     gene_exon_sets = defaultdict(set)
-    nucleotide_counter = defaultdict(int)
     last_exon_for_transcript = {}
-    transcript_lengths = defaultdict(int)
     transcript_strands = defaultdict(str)
+    nucleotide_counter = defaultdict(int)  # Initialize the counter to start from 0 for each transcript
 
     for feature in features:
         seqname, source, feature_type, start, end, score, strand, frame, attribute = feature
         
-        if feature_type in ['exon', 'three_prime_UTR']:
+        if feature_type in ['CDS', 'three_prime_UTR']:
             transcript_id = None
             exon_number = None
             attributes = attribute.split(';')
@@ -39,38 +40,35 @@ def generate_transcript_coordinates(features):
                     transcript_id = attr.split('=')[1].strip() if '=' in attr else attr.split()[1].strip().strip('"')
                     transcript_strands[transcript_id] = strand
                 if 'ID' in attr:
-                    exon_match = re.search(r'exon:(\d+)', attr)
+                    exon_match = re.search(r'CDS:(\d+)', attr)
                     if exon_match:
                         exon_number = int(exon_match.group(1))
 
             if transcript_id and exon_number:
                 gene_id = transcript_id.split('.')[0]
                 exon_positions = []
-                if strand == '+':
-                    for pos in range(start, end + 1):
-                        nucleotide_counter[transcript_id] += 1
-                        exon_positions.append(nucleotide_counter[transcript_id])
-                else:
-                    for pos in range(start, end + 1):
-                        nucleotide_counter[transcript_id] += 1
-                        exon_positions.append(nucleotide_counter[transcript_id])
-                
+
+                for pos in range(start, end + 1):
+                    nucleotide_counter[transcript_id] += 1
+                    exon_positions.append(nucleotide_counter[transcript_id])
+
+                if strand == '-':
+                    exon_positions = exon_positions[::-1]
+
                 transcript_dict[transcript_id][exon_number] = exon_positions
                 transcript_exon_sets[transcript_id].add(exon_number)
                 gene_exon_sets[gene_id].add(exon_number)
 
                 if transcript_id not in last_exon_for_transcript or exon_number > last_exon_for_transcript[transcript_id]:
                     last_exon_for_transcript[transcript_id] = exon_number
-                transcript_lengths[transcript_id] = max(transcript_lengths[transcript_id], nucleotide_counter[transcript_id])
-
 
     gene_exon_counts = {gene: len(exons) for gene, exons in gene_exon_sets.items()}
     trans_exon_counts = {trans: len(exons) for trans, exons in transcript_exon_sets.items()}
     last_exon_for_transcript = {trans: max(exons) for trans, exons in transcript_exon_sets.items() if exons}
 
-
     return transcript_dict, trans_exon_counts, gene_exon_counts, \
-          last_exon_for_transcript, transcript_lengths, transcript_strands
+          last_exon_for_transcript, transcript_strands
+
 
 
 

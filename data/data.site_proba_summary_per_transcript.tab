@@ -1,0 +1,2 @@
+transcript_id	total_sites	non_last_exon_sites	last_exon_sites	utr_sites	last_exon_and_utr_sites	ratio_non_last_to_last_and_utr	chi2	p_value
+AT1G01010.1	2	0	0	2	2	0.0		

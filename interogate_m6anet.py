@@ -18,8 +18,8 @@ from interogate.parse_gtf import parse_gff_gft
 from interogate.return_dict import generate_transcript_coordinates, query_transcript_exon
 from interogate.parse_m6a_site_proba import identify_methylated_sites
 from interogate.plot import plot_methylation_distribution
-from interogate.summary_stats import summarize_methylation_sites
-
+from interogate.summary_stats import summarise_methylation_sites
+from interogate.parse_trans_len import parse_transcript_lengths
 from scipy.stats import chi2_contingency
 
 
@@ -65,11 +65,23 @@ def get_args():
                           type=str,
                           help="input gtf file to get the transcript coordinates")
     
+    optional.add_argument("--len", dest='trans_len',
+                          action="store",
+                          default=os.path.join(file_directory, "data", 
+                                               "Araport11_genes.201606.cdna.len"),
+                          type=str,
+                          help="input gtf file to get the transcript coordinates")
+    
     optional.add_argument("-l", "--logfile", dest='logfile',
                           action="store",
                           default="pipeline.log",
                           type=str,
                           help="log file name")
+    optional.add_argument("--test", dest='test',
+                          action="store",
+                          default=False,
+                          type=str,
+                          help="extra printing for testing, add true if required")
     return parser.parse_args()
     
 
@@ -100,6 +112,10 @@ def main():
     logger.info("Command-line: %s", ' '.join(sys.argv))
     logger.info("Starting processing: %s", time.asctime())
 
+    # get the transcript lenghts
+    transcript_lengths = parse_transcript_lengths(args.trans_len)
+    logger.info("processed: %s", args.trans_len)
+
     # Example usage
     logger.info("Starting processing: %s", args.gtf )
     file_path = args.gtf  # Replace with the path to your GFF or GTF file
@@ -108,16 +124,16 @@ def main():
     file_path = args.gtf
     features = parse_gff_gft(file_path)
     transcript_dict, transcript_exon_counts, gene_exon_counts, last_exon_for_transcript, \
-                transcript_lengths, transcript_strands = generate_transcript_coordinates(features)
+            transcript_strands = generate_transcript_coordinates(features, transcript_lengths)
     
 
-
-    #with open(args.out, 'w') as out_file:
-    #    for transcript, exons in transcript_dict.items():
-    #        for exon, coordinates in exons.items():
-    #            out_data = f'{transcript} exon {exon}: {coordinates}'
-    #            out_file.write(out_data + '\n')
-    #            print(out_data)
+    if args.test:
+        with open(args.out, 'w') as out_file:
+            for transcript, exons in transcript_dict.items():
+                for exon, coordinates in exons.items():
+                    out_data = f'{transcript} exon {exon}: {coordinates}'
+                    out_file.write(out_data + '\n')
+                    print(out_data)
 
    # Process each m6A result file
     
@@ -190,12 +206,12 @@ def main():
 
             # write out a summary per transcript usage
             output_summary = f"{os.path.splitext(m6a_file)[0]}_summary_per_transcript.tab"
-            summarize_methylation_sites(results_df, output_summary, 
+            summarise_methylation_sites(results_df, output_summary, 
                                         logger)
         
 
             logger.info("Processing finished: %s", time.asctime())
-            logger.info("#########################################\n")
+            logger.info("########################\n")
         except Exception as m6a_file_e:
             logger.error(f"An error occurred while processing the file {m6a_file}: {m6a_file_e}")
             continue  # Skip to the next file
@@ -204,3 +220,24 @@ if __name__ == '__main__':
     main()
 
 
+# a spiked real UTR value AT1G01010.1  position > 1290 .. 
+# seem to only return UTR at AT1G01010.1,2433,2433,0.999,AAACA,0.1111111111111111
+#    this should be UTR as len transcript is  1290 ???
+#    6 exons in total. UTR genomic coord 
+info = """
+1       Araport11       mRNA    3631    5899    .       +       .       ID=AT1G01010.1;Parent=AT1G01010;Name=AT1G01010.1;Note=NAC domain containing protein 1;conf_class=2;symbol=NAC001;full_name=NAC domain containing protein 1;computational_description=NAC domain containing protein 1;conf_rating=****;gene=2200934,UniProt=Q0WV96;curator_summary=Member of the NAC domain containing family of plant specific transcriptional regulators.
+1       Araport11       CDS     3760    3913    .       +       0       ID=AT1G01010:CDS:1;Parent=AT1G01010.1;Name=NAC001:CDS:1;Note=NAC domain containing protein 1;curator_summary=Member of the NAC domain containing family of plant specific transcriptional regulators.;computational_description=NAC domain containing protein 1
+1       Araport11       CDS     3996    4276    .       +       2       ID=AT1G01010:CDS:2;Parent=AT1G01010.1;Name=NAC001:CDS:2;Note=NAC domain containing protein 1;curator_summary=Member of the NAC domain containing family of plant specific transcriptional regulators.;computational_description=NAC domain containing protein 1
+1       Araport11       CDS     4486    4605    .       +       0       ID=AT1G01010:CDS:3;Parent=AT1G01010.1;Name=NAC001:CDS:3;Note=NAC domain containing protein 1;curator_summary=Member of the NAC domain containing family of plant specific transcriptional regulators.;computational_description=NAC domain containing protein 1
+1       Araport11       CDS     4706    5095    .       +       0       ID=AT1G01010:CDS:4;Parent=AT1G01010.1;Name=NAC001:CDS:4;Note=NAC domain containing protein 1;curator_summary=Member of the NAC domain containing family of plant specific transcriptional regulators.;computational_description=NAC domain containing protein 1
+1       Araport11       CDS     5174    5326    .       +       0       ID=AT1G01010:CDS:5;Parent=AT1G01010.1;Name=NAC001:CDS:5;Note=NAC domain containing protein 1;curator_summary=Member of the NAC domain containing family of plant specific transcriptional regulators.;computational_description=NAC domain containing protein 1
+1       Araport11       CDS     5439    5630    .       +       0       ID=AT1G01010:CDS:6;Parent=AT1G01010.1;Name=NAC001:CDS:6;Note=NAC domain containing protein 1;curator_summary=Member of the NAC domain containing family of plant specific transcriptional regulators.;computational_description=NAC domain containing protein 1
+1       Araport11       exon    3631    3913    .       +       .       ID=AT1G01010:exon:1;Parent=AT1G01010.1;Name=AT1G01010:exon:1;Note=NAC domain containing protein 1;curator_summary=Member of the NAC domain containing family of plant specific transcriptional regulators.;computational_description=NAC domain containing protein 1
+1       Araport11       exon    3996    4276    .       +       .       ID=AT1G01010:exon:2;Parent=AT1G01010.1;Name=AT1G01010:exon:2;Note=NAC domain containing protein 1;curator_summary=Member of the NAC domain containing family of plant specific transcriptional regulators.;computational_description=NAC domain containing protein 1
+1       Araport11       exon    4486    4605    .       +       .       ID=AT1G01010:exon:3;Parent=AT1G01010.1;Name=AT1G01010:exon:3;Note=NAC domain containing protein 1;curator_summary=Member of the NAC domain containing family of plant specific transcriptional regulators.;computational_description=NAC domain containing protein 1
+1       Araport11       exon    4706    5095    .       +       .       ID=AT1G01010:exon:4;Parent=AT1G01010.1;Name=AT1G01010:exon:4;Note=NAC domain containing protein 1;curator_summary=Member of the NAC domain containing family of plant specific transcriptional regulators.;computational_description=NAC domain containing protein 1
+1       Araport11       exon    5174    5326    .       +       .       ID=AT1G01010:exon:5;Parent=AT1G01010.1;Name=AT1G01010:exon:5;Note=NAC domain containing protein 1;curator_summary=Member of the NAC domain containing family of plant specific transcriptional regulators.;computational_description=NAC domain containing protein 1
+1       Araport11       exon    5439    5899    .       +       .       ID=AT1G01010:exon:6;Parent=AT1G01010.1;Name=AT1G01010:exon:6;Note=NAC domain containing protein 1;curator_summary=Member of the NAC domain containing family of plant specific transcriptional regulators.;computational_description=NAC domain containing protein 1
+1       Araport11       five_prime_UTR  3631    3759    .       +       .       ID=AT1G01010:five_prime_UTR:1;Parent=AT1G01010.1;Name=NAC001:five_prime_UTR:1;Note=NAC domain containing protein 1;curator_summary=Member of the NAC domain containing family of plant specific transcriptional regulators.;computational_description=NAC domain containing protein 1
+1
+"""
