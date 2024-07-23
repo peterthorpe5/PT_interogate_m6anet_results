@@ -2,7 +2,9 @@
 #
 # collect positions
 
-# script to parse 
+# script to parse output of interogate script
+# *annotated.tab file and summerise the positions found
+
 
 import argparse
 import os
@@ -63,6 +65,8 @@ def main():
     args = get_args()
     file_paths = args.file
     output_file = args.output
+
+    # WARNING: adds to the same dictionary for all the input files. 
     
     all_data = defaultdict(lambda: defaultdict(list))
     
@@ -71,17 +75,20 @@ def main():
     
     with open(output_file, 'w', newline='') as out_file:
         writer = csv.writer(out_file, delimiter='\t')
-        writer.writerow(['transcript_id', 'exon_number', 'positions', 'num_positions', 'summary'])
+        writer.writerow(['transcript_id', 'exon_number', 'positions', 'num_positions', 'num_unique_positions', 'summary'])
         
         for transcript_id, exons in all_data.items():
             for exon_number, positions in exons.items():
                 num_positions = len(positions)
+                unique_positions = sorted(set(positions), key=int)
+                num_unique_positions = len(unique_positions)
                 positions.sort(key=int)
                 positions_str = ','.join(positions)
-                summary = ', '.join([f"{pos}({positions.count(pos)})" for pos in sorted(set(positions), key=int)])
-                writer.writerow([transcript_id, exon_number, positions_str, num_positions, summary])
+                summary = ', '.join([f"{pos}({positions.count(pos)})" for pos in unique_positions])
+                writer.writerow([transcript_id, exon_number, positions_str, num_positions, num_unique_positions, summary])
     
     print(f"Data successfully written to {output_file}")
 
 if __name__ == "__main__":
     main()
+
