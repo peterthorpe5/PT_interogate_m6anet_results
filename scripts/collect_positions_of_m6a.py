@@ -4,7 +4,6 @@
 
 # script to parse 
 
-
 import argparse
 import os
 import csv
@@ -24,7 +23,7 @@ def get_args():
                           help="List of input files to be parsed e.g. --file file1.tsv file2.tsv file3.tsv")
  
     optional.add_argument("--output", dest='output',
-                          action="store", default="m6a_positions.tsv",
+                          action="store", default="output.tsv",
                           type=str,
                           help="Path to the output file (default: output.tsv)")
     
@@ -34,7 +33,6 @@ def get_args():
                           help="number of threads: currently does nothing yet")
     
     return parser.parse_args()
-
 
 def parse_file(file_path, data):
     """
@@ -61,7 +59,6 @@ def parse_file(file_path, data):
             position = row['position']
             data[transcript_id][exon_number].append(position)
 
-
 def main():
     args = get_args()
     file_paths = args.file
@@ -74,13 +71,15 @@ def main():
     
     with open(output_file, 'w', newline='') as out_file:
         writer = csv.writer(out_file, delimiter='\t')
-        writer.writerow(['transcript_id', 'exon_number', 'positions', 'num_positions'])
+        writer.writerow(['transcript_id', 'exon_number', 'positions', 'num_positions', 'summary'])
         
         for transcript_id, exons in all_data.items():
             for exon_number, positions in exons.items():
                 num_positions = len(positions)
+                positions.sort(key=int)
                 positions_str = ','.join(positions)
-                writer.writerow([transcript_id, exon_number, positions_str, num_positions])
+                summary = ', '.join([f"{pos}({positions.count(pos)})" for pos in sorted(set(positions), key=int)])
+                writer.writerow([transcript_id, exon_number, positions_str, num_positions, summary])
     
     print(f"Data successfully written to {output_file}")
 
