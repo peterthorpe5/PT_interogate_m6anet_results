@@ -2,6 +2,7 @@
 #
 # you need to run  collect_positions_of_m6a.py first and then compare the ouputs wit hthis script
 
+
 import argparse
 import os
 import csv
@@ -24,6 +25,11 @@ def get_args():
                           action="store", default=None,
                           type=str,
                           help="Path to the output file (default: derived from input filenames)")
+    
+    optional.add_argument("--thread", dest='threads',
+                          action="store", default="1",
+                          type=str,
+                          help="number of threads: currently does nothing yet")
     
     return parser.parse_args()
 
@@ -72,19 +78,21 @@ def compare_files(file_data, filenames):
     """
     comparison_results = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     
-    all_transcripts = set(file_data[0].keys())
-    for data in file_data[1:]:
-        all_transcripts.intersection_update(data.keys())
+    # Collect all unique transcripts and exon numbers
+    all_transcripts = set()
+    transcript_exon_map = defaultdict(set)
+    
+    for data in file_data:
+        all_transcripts.update(data.keys())
+        for transcript_id, exons in data.items():
+            transcript_exon_map[transcript_id].update(exons.keys())
     
     for transcript_id in all_transcripts:
-        exon_numbers = set(file_data[0][transcript_id].keys())
-        for data in file_data[1:]:
-            exon_numbers.intersection_update(data[transcript_id].keys())
+        exon_numbers = transcript_exon_map[transcript_id]
         
         for exon_number in exon_numbers:
-            positions_sets = [set(data[transcript_id][exon_number]) for data in file_data]
-            print(f"Positions sets for {transcript_id} {exon_number}: {positions_sets}")  # Debug print
-            common_positions = set.intersection(*positions_sets)
+            positions_sets = [set(data[transcript_id][exon_number]) for data in file_data if exon_number in data[transcript_id]]
+            common_positions = set.intersection(*positions_sets) if positions_sets else set()
             unique_positions = [set.difference(pos_set, common_positions) for pos_set in positions_sets]
             
             comparison_results[transcript_id][exon_number]['common'] = sorted(list(common_positions), key=int)
