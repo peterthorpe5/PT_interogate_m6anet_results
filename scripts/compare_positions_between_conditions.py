@@ -5,6 +5,11 @@ from collections import defaultdict
 
 # you need to run  collect_positions_of_m6a.py first and then compare the ouputs wit hthis script
 
+import argparse
+import os
+import csv
+from collections import defaultdict
+
 def get_args():
     parser = argparse.ArgumentParser(description="Compare exon modification data from multiple files", add_help=False)
     file_directory = os.path.realpath(__file__).split("compare_exons.py")[0]
@@ -19,10 +24,15 @@ def get_args():
                           help="List of input files to be parsed and compared e.g. --files file1.tsv file2.tsv")
  
     optional.add_argument("--output", dest='output',
-                          action="store", default="comparison_output.tsv",
+                          action="store", default=None,
                           type=str,
-                          help="Path to the output file (default: comparison_output.tsv)")
-       
+                          help="Path to the output file (default: derived from input filenames)")
+    
+    optional.add_argument("--thread", dest='threads',
+                          action="store", default="1",
+                          type=str,
+                          help="number of threads: currently does nothing yet")
+    
     return parser.parse_args()
 
 def parse_file(file_path):
@@ -52,7 +62,7 @@ def parse_file(file_path):
     
     return data
 
-def compare_files(file_data):
+def compare_files(file_data, filenames):
     """
     Compare exon modification data from multiple files.
 
@@ -62,6 +72,7 @@ def compare_files(file_data):
     Args:
         file_data (list): A list of dictionaries where each dictionary contains
                           exon modification data from a file.
+        filenames (list): A list of filenames corresponding to the data.
 
     Returns:
         dict: A dictionary containing the comparison results.
@@ -84,7 +95,7 @@ def compare_files(file_data):
             
             comparison_results[transcript_id][exon_number]['common'] = sorted(list(common_positions), key=int)
             for idx, unique in enumerate(unique_positions):
-                comparison_results[transcript_id][exon_number][f'unique_file{idx+1}'] = sorted(list(unique), key=int)
+                comparison_results[transcript_id][exon_number][f'unique_{os.path.basename(filenames[idx])}'] = sorted(list(unique), key=int)
     
     return comparison_results
 
@@ -93,15 +104,20 @@ def main():
     file_paths = args.files
     output_file = args.output
     
+    if output_file is None:
+        base_names = [os.path.splitext(os.path.basename(f))[0] for f in file_paths]
+        output_file = "_vs_".join(base_names) + "_comparison.tsv"
+    
     file_data = [parse_file(file_path) for file_path in file_paths]
     
-    comparison_results = compare_files(file_data)
+    comparison_results = compare_files(file_data, file_paths)
     
     with open(output_file, 'w', newline='') as out_file:
         writer = csv.writer(out_file, delimiter='\t')
         header = ['transcript_id', 'exon_number', 'common_positions', 'num_common_positions']
-        for idx in range(len(file_paths)):
-            header.extend([f'unique_positions_file{idx+1}', f'num_unique_positions_file{idx+1}'])
+        for filename in file_paths:
+            basename = os.path.basename(filename)
+            header.extend([f'unique_positions_{basename}', f'num_unique_positions_{basename}'])
         writer.writerow(header)
         
         for transcript_id, exons in comparison_results.items():
@@ -110,8 +126,9 @@ def main():
                 num_common_positions = len(common_positions)
                 row = [transcript_id, exon_number, ','.join(common_positions), num_common_positions]
                 
-                for idx in range(len(file_paths)):
-                    unique_positions = positions_data.get(f'unique_file{idx+1}', [])
+                for filename in file_paths:
+                    unique_key = f'unique_{os.path.basename(filename)}'
+                    unique_positions = positions_data.get(unique_key, [])
                     num_unique_positions = len(unique_positions)
                     row.extend([','.join(unique_positions), num_unique_positions])
                 
