@@ -1,10 +1,5 @@
-import argparse
-import os
-import csv
-from collections import defaultdict
 
 # you need to run  collect_positions_of_m6a.py first and then compare the ouputs wit hthis script
-
 import argparse
 import os
 import csv
@@ -59,6 +54,7 @@ def parse_file(file_path):
             exon_number = row['exon_number']
             positions = row['positions'].split(',')
             data[transcript_id][exon_number].extend(positions)
+            # print(f"Parsed {transcript_id} {exon_number} with positions: {positions}")  # Debug print
     
     return data
 
