@@ -1,6 +1,6 @@
-
+#!/usr/bin/env python3
+#
 # you need to run  collect_positions_of_m6a.py first and then compare the ouputs wit hthis script
-
 
 import argparse
 import os
@@ -24,11 +24,6 @@ def get_args():
                           action="store", default=None,
                           type=str,
                           help="Path to the output file (default: derived from input filenames)")
-    
-    optional.add_argument("--thread", dest='threads',
-                          action="store", default="1",
-                          type=str,
-                          help="number of threads: currently does nothing yet")
     
     return parser.parse_args()
 
@@ -88,6 +83,7 @@ def compare_files(file_data, filenames):
         
         for exon_number in exon_numbers:
             positions_sets = [set(data[transcript_id][exon_number]) for data in file_data]
+            print(f"Positions sets for {transcript_id} {exon_number}: {positions_sets}")  # Debug print
             common_positions = set.intersection(*positions_sets)
             unique_positions = [set.difference(pos_set, common_positions) for pos_set in positions_sets]
             

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 
 def parse_gene_counts_matrix(matrix_file, goi_file, output_file):
