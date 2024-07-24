@@ -129,7 +129,7 @@ def main():
                     unique_key = f'unique_{os.path.basename(filename)}'
                     unique_positions = positions_data.get(unique_key, [])
                     num_unique_positions = len(unique_positions)
-                    row.extend([','.join(unique_positions), num_unique_positions])
+                    row.extend([', '.join(unique_positions), num_unique_positions])
                 
                 writer.writerow(row)
     
