@@ -123,7 +123,7 @@ def main():
             for exon_number, positions_data in exons.items():
                 common_positions = positions_data['common']
                 num_common_positions = len(common_positions)
-                row = [transcript_id, exon_number, ','.join(common_positions), num_common_positions]
+                row = [transcript_id, exon_number, ', '.join(common_positions), num_common_positions]
                 
                 for filename in file_paths:
                     unique_key = f'unique_{os.path.basename(filename)}'
