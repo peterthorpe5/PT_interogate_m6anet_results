@@ -1,5 +1,7 @@
 
 # you need to run  collect_positions_of_m6a.py first and then compare the ouputs wit hthis script
+
+
 import argparse
 import os
 import csv
@@ -54,7 +56,7 @@ def parse_file(file_path):
             exon_number = row['exon_number']
             positions = row['positions'].split(',')
             data[transcript_id][exon_number].extend(positions)
-            # print(f"Parsed {transcript_id} {exon_number} with positions: {positions}")  # Debug print
+            print(f"Parsed {transcript_id} {exon_number} with positions: {positions}")  # Debug print
     
     return data
 
@@ -92,6 +94,7 @@ def compare_files(file_data, filenames):
             comparison_results[transcript_id][exon_number]['common'] = sorted(list(common_positions), key=int)
             for idx, unique in enumerate(unique_positions):
                 comparison_results[transcript_id][exon_number][f'unique_{os.path.basename(filenames[idx])}'] = sorted(list(unique), key=int)
+                print(f"Unique positions for {transcript_id} {exon_number} in file {filenames[idx]}: {unique}")  # Debug print
     
     return comparison_results
 
