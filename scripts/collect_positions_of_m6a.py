@@ -29,11 +29,6 @@ def get_args():
                           type=str,
                           help="Path to the output file (default: output.tsv)")
     
-    optional.add_argument("--thread", dest='threads',
-                          action="store", default="1",
-                          type=str,
-                          help="number of threads: currently does nothing yet")
-    
     return parser.parse_args()
 
 def parse_file(file_path, data):
