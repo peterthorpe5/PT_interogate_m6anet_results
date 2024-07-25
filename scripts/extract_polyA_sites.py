@@ -132,6 +132,32 @@ def main():
 
     # Perform statistical comparison of poly(A) site locations
     logging.info("Starting statistical analysis of poly(A) site locations")
+    wt_sites = polyA_df_wt['Genomic_Coordinate'].values
+    mut_sites = polyA_df_mut['Genomic_Coordinate'].values
+
+    w_distance = wasserstein_distance(wt_sites, mut_sites)
+    logging.info(f"Wasserstein distance between WT and MUT poly(A) sites: {w_distance}")
+
+    # Additional statistical tests
+    u_statistic, p_value = mannwhitneyu(wt_sites, mut_sites, alternative='two-sided')
+    logging.info(f"Mann-Whitney U test p-value: {p_value}")
+
+    # Summary statistics
+    summary_stats = {
+        'WT_Count': len(wt_sites),
+        'MUT_Count': len(mut_sites),
+        'WT_Mean': np.mean(wt_sites),
+        'MUT_Mean': np.mean(mut_sites),
+        'WT_Median': np.median(wt_sites),
+        'MUT_Median': np.median(mut_sites),
+        'WT_Std': np.std(wt_sites),
+        'MUT_Std': np.std(mut_sites)
+    }
+
+    logging.info(f"Summary Statistics: {summary_stats}")
+
+    # Perform statistical comparison of poly(A) site locations
+    logging.info("Starting statistical analysis of poly(A) site locations")
     significant_results = perform_statistical_analysis(polyA_data, args.fdr)
 
     # Save significant results
