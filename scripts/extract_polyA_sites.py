@@ -6,6 +6,7 @@ import os
 from scipy.stats import wasserstein_distance, mannwhitneyu
 import numpy as np
 import logging
+from statsmodels.stats.multitest import multipletests
 
 
 def get_args():
@@ -39,6 +40,18 @@ def get_args():
                           required=True,
                           type=str,
                           help="List of group names corresponding to BAM files e.g. --groups WT WT WT MUT MUT MUT")
+
+    optional.add_argument("--fdr", dest='fdr',
+                          action="store",
+                          type=float,
+                          default=0.05,
+                          help="False discovery rate threshold for multiple testing correction")
+
+    optional.add_argument("--log", dest='log',
+                          action="store",
+                          type=str,
+                          default="script.log",
+                          help="Log file to store the logging information")
 
     optional.add_argument("-h", "--help", action="help", default=argparse.SUPPRESS,
                           help="Show this help message and exit")
@@ -78,9 +91,29 @@ def extract_polyA_sites(bam_file, fasta_file, group):
     return polyA_sites
 
 
+def perform_statistical_analysis(polyA_data, fdr_threshold):
+    results = []
+
+    for transcript_id in set([site[1] for group in polyA_data.values() for site in group]):
+        wt_sites = np.array([site[2] for site in polyA_data['WT'] if site[1] == transcript_id])
+        mut_sites = np.array([site[2] for site in polyA_data['MUT'] if site[1] == transcript_id])
+
+        if len(wt_sites) > 0 and len(mut_sites) > 0:
+            w_distance = wasserstein_distance(wt_sites, mut_sites)
+            u_statistic, p_value = mannwhitneyu(wt_sites, mut_sites, alternative='two-sided')
+            results.append((transcript_id, w_distance, p_value))
+
+    # Multiple testing correction
+    p_values = [result[2] for result in results]
+    reject, pvals_corrected, _, _ = multipletests(p_values, alpha=fdr_threshold, method='fdr_bh')
+
+    significant_results = [result for result, reject_flag in zip(results, reject) if reject_flag]
+    return significant_results
+
+
 def main():
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     args = get_args()
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s', filename=args.log, filemode='w')
 
     polyA_data = {'WT': [], 'MUT': []}
 
@@ -99,29 +132,14 @@ def main():
 
     # Perform statistical comparison of poly(A) site locations
     logging.info("Starting statistical analysis of poly(A) site locations")
-    wt_sites = polyA_df_wt['Genomic_Coordinate'].values
-    mut_sites = polyA_df_mut['Genomic_Coordinate'].values
+    significant_results = perform_statistical_analysis(polyA_data, args.fdr)
 
-    w_distance = wasserstein_distance(wt_sites, mut_sites)
-    logging.info(f"Wasserstein distance between WT and MUT poly(A) sites: {w_distance}")
+    # Save significant results
+    significant_df = pd.DataFrame(significant_results, columns=['TranscriptID', 'Wasserstein_Distance', 'Adjusted_p_value'])
+    significant_df.to_csv(f"significant_{args.output}", sep='\t', index=False)
+    logging.info(f"Significant transcripts with different poly(A) site locations have been saved to significant_{args.output}")
 
-    # Additional statistical tests
-    u_statistic, p_value = mannwhitneyu(wt_sites, mut_sites, alternative='two-sided')
-    logging.info(f"Mann-Whitney U test p-value: {p_value}")
-
-    # Summary statistics
-    summary_stats = {
-        'WT_Count': len(wt_sites),
-        'MUT_Count': len(mut_sites),
-        'WT_Mean': np.mean(wt_sites),
-        'MUT_Mean': np.mean(mut_sites),
-        'WT_Median': np.median(wt_sites),
-        'MUT_Median': np.median(mut_sites),
-        'WT_Std': np.std(wt_sites),
-        'MUT_Std': np.std(mut_sites)
-    }
-
-    logging.info(f"Summary Statistics: {summary_stats}")
+    logging.info(f"Total significant transcripts: {len(significant_results)}")
 
 
 if __name__ == "__main__":
@@ -136,4 +154,6 @@ if __name__ == "__main__":
 # It will also perform a statistical comparison of the poly(A) site locations, reporting the Wasserstein distance 
 # and the p-value from the Mann-Whitney U test. Additionally, summary statistics for the poly(A) site locations 
 # will be logged, including count, mean, median, and standard deviation for both WT and MUT groups.
+# Transcripts with significantly different poly(A) site locations (based on the specified FDR threshold) 
+# will be saved in a separate TSV file named significant_<output>.tsv.
 """
