@@ -5,6 +5,7 @@ import argparse
 import os
 from scipy.stats import wasserstein_distance
 import numpy as np
+import logging
 
 
 def get_args():
@@ -45,7 +46,8 @@ def get_args():
     return parser.parse_args()
 
 
-def extract_polyA_sites(bam_file, fasta_file):
+def extract_polyA_sites(bam_file, fasta_file, group):
+    logging.info(f"Processing file: {bam_file} as {group}")
     bam = pysam.AlignmentFile(bam_file, "rb")
     fasta = pysam.FastaFile(fasta_file)
     
@@ -77,12 +79,13 @@ def extract_polyA_sites(bam_file, fasta_file):
 
 
 def main():
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     args = get_args()
 
     polyA_data = {'WT': [], 'MUT': []}
 
     for bam_file, group in zip(args.bam, args.groups):
-        polyA_sites = extract_polyA_sites(bam_file, args.fasta)
+        polyA_sites = extract_polyA_sites(bam_file, args.fasta, group)
         polyA_data[group].extend(polyA_sites)
 
     # Convert results to DataFrame
@@ -92,19 +95,20 @@ def main():
     # Save to TSV
     polyA_df_wt.to_csv(f"WT_{args.output}", sep='\t', index=False)
     polyA_df_mut.to_csv(f"MUT_{args.output}", sep='\t', index=False)
-    print(f"Poly(A) sites have been extracted and saved to {args.output}")
+    logging.info(f"Poly(A) sites have been extracted and saved to {args.output}")
 
     # Perform statistical comparison of poly(A) site locations
+    logging.info("Starting statistical analysis of poly(A) site locations")
     wt_sites = polyA_df_wt['Genomic_Coordinate'].values
     mut_sites = polyA_df_mut['Genomic_Coordinate'].values
 
     w_distance = wasserstein_distance(wt_sites, mut_sites)
-    print(f"Wasserstein distance between WT and MUT poly(A) sites: {w_distance}")
+    logging.info(f"Wasserstein distance between WT and MUT poly(A) sites: {w_distance}")
 
     # Additional statistical tests
     from scipy.stats import mannwhitneyu
     u_statistic, p_value = mannwhitneyu(wt_sites, mut_sites, alternative='two-sided')
-    print(f"Mann-Whitney U test p-value: {p_value}")
+    logging.info(f"Mann-Whitney U test p-value: {p_value}")
 
 
 if __name__ == "__main__":
