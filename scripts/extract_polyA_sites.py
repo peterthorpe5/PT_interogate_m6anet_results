@@ -14,7 +14,7 @@ def get_args():
     file_directory = os.path.realpath(__file__).split("extract_polyA_sites.py")[0]
     optional = parser.add_argument_group('optional arguments')
 
-    optional.add_argument("--bam", dest='bam",
+    optional.add_argument("--bam", dest="bam",
                           action="store",
                           nargs='+',
                           required=True,
