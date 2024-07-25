@@ -109,7 +109,8 @@ def perform_statistical_analysis(polyA_data, fdr_threshold):
             results.append((transcript_id, wt_count, mut_count, p_value))
             logging.info(f"Transcript {transcript_id}: WT count = {wt_count}, MUT count = {mut_count}, p-value = {p_value}")
         else:
-            logging.info(f"Transcript {transcript_id}: insufficient data for WT or MUT (WT count = {wt_count}, MUT count = {mut_count})")
+            dummy_var = "yep!"
+            #logging.info(f"Transcript {transcript_id}: insufficient data for WT or MUT (WT count = {wt_count}, MUT count = {mut_count})")
 
     logging.info(f"Performed statistical tests on {len(results)} transcripts")
 
