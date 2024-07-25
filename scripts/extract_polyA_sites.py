@@ -3,7 +3,7 @@ import re
 import pandas as pd
 import argparse
 import os
-from scipy.stats import wasserstein_distance
+from scipy.stats import wasserstein_distance, mannwhitneyu
 import numpy as np
 import logging
 
@@ -106,10 +106,34 @@ def main():
     logging.info(f"Wasserstein distance between WT and MUT poly(A) sites: {w_distance}")
 
     # Additional statistical tests
-    from scipy.stats import mannwhitneyu
     u_statistic, p_value = mannwhitneyu(wt_sites, mut_sites, alternative='two-sided')
     logging.info(f"Mann-Whitney U test p-value: {p_value}")
+
+    # Summary statistics
+    summary_stats = {
+        'WT_Count': len(wt_sites),
+        'MUT_Count': len(mut_sites),
+        'WT_Mean': np.mean(wt_sites),
+        'MUT_Mean': np.mean(mut_sites),
+        'WT_Median': np.median(wt_sites),
+        'MUT_Median': np.median(mut_sites),
+        'WT_Std': np.std(wt_sites),
+        'MUT_Std': np.std(mut_sites)
+    }
+
+    logging.info(f"Summary Statistics: {summary_stats}")
 
 
 if __name__ == "__main__":
     main()
+
+"""
+# Example usage:
+# python extract_polyA_sites.py --bam WT_rep1.bam WT_rep2.bam WT_rep3.bam MUT_rep1.bam MUT_rep2.bam MUT_rep3.bam --output polyA_sites.tsv --fasta reference_genome.fasta --groups WT WT WT MUT MUT MUT
+
+# Output:
+# The script will generate a TSV file containing the poly(A) sites for both WT and MUT groups. 
+# It will also perform a statistical comparison of the poly(A) site locations, reporting the Wasserstein distance 
+# and the p-value from the Mann-Whitney U test. Additionally, summary statistics for the poly(A) site locations 
+# will be logged, including count, mean, median, and standard deviation for both WT and MUT groups.
+"""
