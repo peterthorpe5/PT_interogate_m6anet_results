@@ -4,6 +4,7 @@ import pandas as pd
 import argparse
 import os
 
+
 def get_args():
     parser = argparse.ArgumentParser(description="Extract poly(A) sites from nanopore direct RNAseq data",
                                      add_help=False)
@@ -31,6 +32,7 @@ def get_args():
 
     return parser.parse_args()
 
+
 def extract_polyA_sites(bam_file, fasta_file):
     # Open the BAM file
     bam = pysam.AlignmentFile(bam_file, "rb")
@@ -49,6 +51,8 @@ def extract_polyA_sites(bam_file, fasta_file):
             match = re.search(r'(A{10,})$', seq)
             
             if match:
+                # Get the read name
+                read_name = read.query_name
                 # Get the start position of the poly(A) tail
                 polyA_start = read.reference_start + match.start()
                 # Calculate the length of the poly(A) tail
@@ -70,9 +74,10 @@ def extract_polyA_sites(bam_file, fasta_file):
                     pre_polyA_seq = fasta.fetch(chrom, 0, coordinate)
                 
                 # Store the result
-                polyA_sites.append([transcript_id, coordinate, polyA_start, polyA_length, pre_polyA_seq])
+                polyA_sites.append([read_name, transcript_id, coordinate, polyA_start, polyA_length, pre_polyA_seq])
     
     return polyA_sites
+
 
 def main():
     args = get_args()
@@ -84,7 +89,7 @@ def main():
         all_polyA_sites.extend(polyA_sites)
 
     # Convert results to a DataFrame
-    polyA_df = pd.DataFrame(all_polyA_sites, columns=['TranscriptID', 'Genomic_Coordinate', 'PolyA_Start', 'PolyA_Length', 'Pre_PolyA_Sequence'])
+    polyA_df = pd.DataFrame(all_polyA_sites, columns=['Read_Name', 'TranscriptID', 'Genomic_Coordinate', 'PolyA_Start', 'PolyA_Length', 'Pre_PolyA_Sequence'])
     
     # Save to TSV
     polyA_df.to_csv(args.output, sep='\t', index=False)
