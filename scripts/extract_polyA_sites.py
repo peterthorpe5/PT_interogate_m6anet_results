@@ -8,7 +8,6 @@ import numpy as np
 import logging
 from statsmodels.stats.multitest import multipletests
 
-
 def get_args():
     parser = argparse.ArgumentParser(description="Extract poly(A) sites from nanopore direct RNAseq data",
                                      add_help=False)
@@ -58,7 +57,6 @@ def get_args():
 
     return parser.parse_args()
 
-
 def extract_polyA_sites(bam_file, fasta_file, group):
     logging.info(f"Processing file: {bam_file} as {group}")
     bam = pysam.AlignmentFile(bam_file, "rb")
@@ -88,13 +86,16 @@ def extract_polyA_sites(bam_file, fasta_file, group):
                 
                 polyA_sites.append([read_name, transcript_id, coordinate, polyA_start, polyA_length, pre_polyA_seq])
     
+    logging.info(f"Extracted {len(polyA_sites)} poly(A) sites from {bam_file}")
     return polyA_sites
-
 
 def perform_statistical_analysis(polyA_data, fdr_threshold):
     results = []
 
-    for transcript_id in set([site[1] for group in polyA_data.values() for site in group]):
+    all_transcripts = set([site[1] for group in polyA_data.values() for site in group])
+    logging.info(f"Total transcripts found: {len(all_transcripts)}")
+
+    for transcript_id in all_transcripts:
         wt_sites = np.array([site[2] for site in polyA_data['WT'] if site[1] == transcript_id])
         mut_sites = np.array([site[2] for site in polyA_data['MUT'] if site[1] == transcript_id])
 
@@ -102,14 +103,20 @@ def perform_statistical_analysis(polyA_data, fdr_threshold):
             w_distance = wasserstein_distance(wt_sites, mut_sites)
             u_statistic, p_value = mannwhitneyu(wt_sites, mut_sites, alternative='two-sided')
             results.append((transcript_id, w_distance, p_value))
+            logging.info(f"Transcript {transcript_id}: WT count = {len(wt_sites)}, MUT count = {len(mut_sites)}, "
+                         f"Wasserstein distance = {w_distance}, p-value = {p_value}")
+        else:
+            logging.info(f"Transcript {transcript_id}: insufficient data for WT or MUT (WT count = {len(wt_sites)}, MUT count = {len(mut_sites)})")
+
+    logging.info(f"Performed statistical tests on {len(results)} transcripts")
 
     # Multiple testing correction
     p_values = [result[2] for result in results]
     reject, pvals_corrected, _, _ = multipletests(p_values, alpha=fdr_threshold, method='fdr_bh')
 
     significant_results = [result for result, reject_flag in zip(results, reject) if reject_flag]
+    logging.info(f"Significant transcripts after FDR correction: {len(significant_results)}")
     return significant_results
-
 
 def main():
     args = get_args()
@@ -157,7 +164,6 @@ def main():
     logging.info(f"Summary Statistics: {summary_stats}")
 
     # Perform statistical comparison of poly(A) site locations
-    logging.info("Starting statistical analysis of poly(A) site locations")
     significant_results = perform_statistical_analysis(polyA_data, args.fdr)
 
     # Save significant results
@@ -167,19 +173,5 @@ def main():
 
     logging.info(f"Total significant transcripts: {len(significant_results)}")
 
-
 if __name__ == "__main__":
     main()
-
-"""
-# Example usage:
-# python extract_polyA_sites.py --bam WT_rep1.bam WT_rep2.bam WT_rep3.bam MUT_rep1.bam MUT_rep2.bam MUT_rep3.bam --output polyA_sites.tsv --fasta reference_genome.fasta --groups WT WT WT MUT MUT MUT
-
-# Output:
-# The script will generate a TSV file containing the poly(A) sites for both WT and MUT groups. 
-# It will also perform a statistical comparison of the poly(A) site locations, reporting the Wasserstein distance 
-# and the p-value from the Mann-Whitney U test. Additionally, summary statistics for the poly(A) site locations 
-# will be logged, including count, mean, median, and standard deviation for both WT and MUT groups.
-# Transcripts with significantly different poly(A) site locations (based on the specified FDR threshold) 
-# will be saved in a separate TSV file named significant_<output>.tsv.
-"""
