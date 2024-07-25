@@ -3,7 +3,7 @@ import re
 import pandas as pd
 import argparse
 import os
-from scipy.stats import wasserstein_distance, mannwhitneyu, fisher_exact
+from scipy.stats import wasserstein_distance, mannwhitneyu
 import numpy as np
 import logging
 from statsmodels.stats.multitest import multipletests
@@ -14,7 +14,7 @@ def get_args():
     file_directory = os.path.realpath(__file__).split("extract_polyA_sites.py")[0]
     optional = parser.add_argument_group('optional arguments')
 
-    optional.add_argument("--bam", dest='bam',
+    optional.add_argument("--bam", dest='bam",
                           action="store",
                           nargs='+',
                           required=True,
@@ -99,26 +99,23 @@ def perform_statistical_analysis(polyA_data, fdr_threshold):
         wt_sites = [site[2] for site in polyA_data['WT'] if site[1] == transcript_id]
         mut_sites = [site[2] for site in polyA_data['MUT'] if site[1] == transcript_id]
 
-        wt_count = len(wt_sites)
-        mut_count = len(mut_sites)
-
-        if wt_count > 0 and mut_count > 0:
-            # Perform Fisher's Exact Test
-            contingency_table = [[wt_count, len(polyA_data['WT']) - wt_count], [mut_count, len(polyA_data['MUT']) - mut_count]]
-            _, p_value = fisher_exact(contingency_table, alternative='two-sided')
-            results.append((transcript_id, wt_count, mut_count, p_value))
-            logging.info(f"Transcript {transcript_id}: WT count = {wt_count}, MUT count = {mut_count}, p-value = {p_value}")
+        if len(wt_sites) > 1 and len(mut_sites) > 1:
+            w_distance = wasserstein_distance(wt_sites, mut_sites)
+            u_statistic, p_value = mannwhitneyu(wt_sites, mut_sites, alternative='two-sided')
+            results.append((transcript_id, w_distance, p_value))
+            logging.info(f"Transcript {transcript_id}: WT count = {len(wt_sites)}, MUT count = {len(mut_sites)}, "
+                         f"Wasserstein distance = {w_distance}, p-value = {p_value}")
         else:
-            dummy_var = "yep!"
-            #logging.info(f"Transcript {transcript_id}: insufficient data for WT or MUT (WT count = {wt_count}, MUT count = {mut_count})")
+            dummy_var = "YEP!"
+            # logging.info(f"Transcript {transcript_id}: insufficient data for WT or MUT (WT count = {len(wt_sites)}, MUT count = {len(mut_sites)})")
 
     logging.info(f"Performed statistical tests on {len(results)} transcripts")
 
     # Multiple testing correction
-    p_values = [result[3] for result in results]
+    p_values = [result[2] for result in results]
     reject, pvals_corrected, _, _ = multipletests(p_values, alpha=fdr_threshold, method='fdr_bh')
 
-    significant_results = [(result[0], result[1], result[2], result[3], pval_corr) for result, pval_corr, reject_flag in zip(results, pvals_corrected, reject) if reject_flag]
+    significant_results = [(result[0], result[1], result[2], pval_corr) for result, pval_corr, reject_flag in zip(results, pvals_corrected, reject) if reject_flag]
     logging.info(f"Significant transcripts after FDR correction: {len(significant_results)}")
     return significant_results
 
@@ -179,7 +176,7 @@ def main():
     significant_results = perform_statistical_analysis(polyA_data, args.fdr)
 
     # Save significant results
-    significant_df = pd.DataFrame(significant_results, columns=['TranscriptID', 'WT_Count', 'MUT_Count', 'p_value', 'Adjusted_p_value'])
+    significant_df = pd.DataFrame(significant_results, columns=['TranscriptID', 'Wasserstein_Distance', 'p_value', 'Adjusted_p_value'])
     significant_df.to_csv(f"significant_{args.output}", sep='\t', index=False)
     logging.info(f"Significant transcripts with different poly(A) site locations have been saved to significant_{args.output}")
 
