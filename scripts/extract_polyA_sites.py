@@ -14,7 +14,7 @@ def get_args():
     file_directory = os.path.realpath(__file__).split("extract_polyA_sites.py")[0]
     optional = parser.add_argument_group('optional arguments')
 
-    optional.add_argument("--bam", dest="bam",
+    optional.add_argument("--bam", dest='bam',
                           action="store",
                           nargs='+',
                           required=True,
@@ -100,14 +100,11 @@ def perform_statistical_analysis(polyA_data, fdr_threshold):
         mut_sites = [site[2] for site in polyA_data['MUT'] if site[1] == transcript_id]
 
         if len(wt_sites) > 1 and len(mut_sites) > 1:
-            w_distance = wasserstein_distance(wt_sites, mut_sites)
             u_statistic, p_value = mannwhitneyu(wt_sites, mut_sites, alternative='two-sided')
-            results.append((transcript_id, w_distance, p_value))
-            logging.info(f"Transcript {transcript_id}: WT count = {len(wt_sites)}, MUT count = {len(mut_sites)}, "
-                         f"Wasserstein distance = {w_distance}, p-value = {p_value}")
+            results.append((transcript_id, u_statistic, p_value))
+            logging.info(f"Transcript {transcript_id}: WT count = {len(wt_sites)}, MUT count = {len(mut_sites)}, p-value = {p_value}")
         else:
-            dummy_var = "YEP!"
-            # logging.info(f"Transcript {transcript_id}: insufficient data for WT or MUT (WT count = {len(wt_sites)}, MUT count = {len(mut_sites)})")
+            logging.info(f"Transcript {transcript_id}: insufficient data for WT or MUT (WT count = {len(wt_sites)}, MUT count = {len(mut_sites)})")
 
     logging.info(f"Performed statistical tests on {len(results)} transcripts")
 
@@ -176,7 +173,7 @@ def main():
     significant_results = perform_statistical_analysis(polyA_data, args.fdr)
 
     # Save significant results
-    significant_df = pd.DataFrame(significant_results, columns=['TranscriptID', 'Wasserstein_Distance', 'p_value', 'Adjusted_p_value'])
+    significant_df = pd.DataFrame(significant_results, columns=['TranscriptID', 'U_Statistic', 'p_value', 'Adjusted_p_value'])
     significant_df.to_csv(f"significant_{args.output}", sep='\t', index=False)
     logging.info(f"Significant transcripts with different poly(A) site locations have been saved to significant_{args.output}")
 
