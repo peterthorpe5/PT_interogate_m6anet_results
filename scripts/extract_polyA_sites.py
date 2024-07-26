@@ -82,7 +82,14 @@ def extract_stop_codon_positions(gtf_file):
     Returns:
         dict: A dictionary with transcript IDs as keys and stop codon positions as values.
     """
-    db = gffutils.create_db(gtf_file, dbfn='reference.db', force=True, keep_order=True, merge_strategy='merge', sort_attribute_values=True)
+    db_filename = 'reference.db'
+    
+    if os.path.exists(db_filename):
+        logging.info(f"Loading existing GFF database from {db_filename}")
+        db = gffutils.FeatureDB(db_filename)
+    else:
+        logging.info(f"Creating new GFF database from {gtf_file}")
+        db = gffutils.create_db(gtf_file, dbfn=db_filename, force=True, keep_order=True, merge_strategy='merge', sort_attribute_values=True)
     
     stop_codons = {}
     for gene in db.features_of_type('gene'):
@@ -131,9 +138,17 @@ def extract_polyA_sites(bam_file, fasta_file, stop_codons, group):
                 if coordinate >= 20:
                     region_start = coordinate - 20
                     region_end = coordinate
-                    pre_polyA_seq = fasta.fetch(chrom, region_start, region_end)
+                    try:
+                        pre_polyA_seq = fasta.fetch(chrom, region_start, region_end)
+                    except KeyError:
+                        logging.error(f"Chromosome '{chrom}' not found in FASTA file.")
+                        continue
                 else:
-                    pre_polyA_seq = fasta.fetch(chrom, 0, coordinate)
+                    try:
+                        pre_polyA_seq = fasta.fetch(chrom, 0, coordinate)
+                    except KeyError:
+                        logging.error(f"Chromosome '{chrom}' not found in FASTA file.")
+                        continue
 
                 stop_codon_info = stop_codons.get(transcript_id, None)
                 if stop_codon_info:
@@ -218,10 +233,19 @@ def main():
     polyA_df_mut.to_csv(f"MUT_{args.output}", sep='\t', index=False)
     logging.info(f"Poly(A) sites have been extracted and saved to {args.output}")
 
+    # Check if there are any poly(A) sites
+    if polyA_df_wt.empty or polyA_df_mut.empty:
+        logging.error("No poly(A) sites extracted. Ensure the input BAM files and GTF annotations are correct.")
+        return
+
     # Perform global statistical comparison of poly(A) site locations
     logging.info("Starting global statistical analysis of poly(A) site locations")
     wt_sites = polyA_df_wt['Distance_From_Stop'].values
     mut_sites = polyA_df_mut['Distance_From_Stop'].values
+
+    if len(wt_sites) == 0 or len(mut_sites) == 0:
+        logging.error("No poly(A) sites found in one or both groups. Cannot perform statistical analysis.")
+        return
 
     w_distance = wasserstein_distance(wt_sites, mut_sites)
     logging.info(f"Wasserstein distance between WT and MUT poly(A) sites: {w_distance}")
