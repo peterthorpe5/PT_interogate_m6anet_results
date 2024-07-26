@@ -7,19 +7,10 @@ from scipy.stats import wasserstein_distance, mannwhitneyu
 import numpy as np
 import logging
 from statsmodels.stats.multitest import multipletests
-import gffutils
 
 def get_args():
-    """
-    Parse and return the command line arguments.
-
-    Returns:
-        argparse.Namespace: Parsed command line arguments.
-    """
-    parser = argparse.ArgumentParser(
-        description="Extract poly(A) sites from nanopore direct RNAseq data",
-        add_help=False
-    )
+    parser = argparse.ArgumentParser(description="Extract poly(A) sites from nanopore direct RNAseq data",
+                                     add_help=False)
     file_directory = os.path.realpath(__file__).split("extract_polyA_sites.py")[0]
     optional = parser.add_argument_group('optional arguments')
 
@@ -41,12 +32,6 @@ def get_args():
                           type=str,
                           required=True,
                           help="FASTA file of the reference genome")
-
-    optional.add_argument("--gtf", dest='gtf',
-                          action="store",
-                          type=str,
-                          required=True,
-                          help="GTF file with genomic annotations")
 
     optional.add_argument("--groups", dest='groups',
                           action="store",
@@ -72,41 +57,7 @@ def get_args():
 
     return parser.parse_args()
 
-def extract_stop_codon_positions(gtf_file):
-    """
-    Extract stop codon positions from the GTF file.
-
-    Args:
-        gtf_file (str): Path to the GTF file.
-
-    Returns:
-        dict: A dictionary with transcript IDs as keys and stop codon positions as values.
-    """
-    db = gffutils.create_db(gtf_file, dbfn='reference.db', force=True, keep_order=True, merge_strategy='merge', sort_attribute_values=True)
-    
-    stop_codons = {}
-    for gene in db.features_of_type('gene'):
-        for transcript in db.children(gene, featuretype='transcript'):
-            cds = list(db.children(transcript, featuretype='CDS'))
-            if cds:
-                strand = cds[-1].strand
-                stop_codon_pos = cds[-1].end if strand == '+' else cds[-1].start
-                stop_codons[transcript.id] = (stop_codon_pos, strand)
-    return stop_codons
-
-def extract_polyA_sites(bam_file, fasta_file, stop_codons, group):
-    """
-    Extract poly(A) sites from the BAM file and calculate distances from stop codons.
-
-    Args:
-        bam_file (str): Path to the BAM file.
-        fasta_file (str): Path to the reference genome FASTA file.
-        stop_codons (dict): Dictionary of stop codon positions and strands.
-        group (str): Sample group (e.g., WT or MUT).
-
-    Returns:
-        list: A list of poly(A) site information.
-    """
+def extract_polyA_sites(bam_file, fasta_file, group):
     logging.info(f"Processing file: {bam_file} as {group}")
     bam = pysam.AlignmentFile(bam_file, "rb")
     fasta = pysam.FastaFile(fasta_file)
@@ -132,38 +83,21 @@ def extract_polyA_sites(bam_file, fasta_file, stop_codons, group):
                     pre_polyA_seq = fasta.fetch(chrom, region_start, region_end)
                 else:
                     pre_polyA_seq = fasta.fetch(chrom, 0, coordinate)
-
-                stop_codon_info = stop_codons.get(transcript_id, None)
-                if stop_codon_info:
-                    stop_codon_pos, strand = stop_codon_info
-                    if strand == '+':
-                        distance_from_stop = coordinate - stop_codon_pos
-                    else:
-                        distance_from_stop = stop_codon_pos - coordinate
-                    polyA_sites.append([read_name, transcript_id, coordinate, polyA_start, polyA_length, pre_polyA_seq, distance_from_stop])
+                
+                polyA_sites.append([read_name, transcript_id, coordinate, polyA_start, polyA_length, pre_polyA_seq])
     
     logging.info(f"Extracted {len(polyA_sites)} poly(A) sites from {bam_file}")
     return polyA_sites
 
 def perform_statistical_analysis(polyA_data, fdr_threshold):
-    """
-    Perform statistical analysis on poly(A) site data to find significant differences.
-
-    Args:
-        polyA_data (dict): Dictionary of poly(A) site data for WT and MUT groups.
-        fdr_threshold (float): False discovery rate threshold for multiple testing correction.
-
-    Returns:
-        list: A list of significant results after multiple testing correction.
-    """
     results = []
 
     all_transcripts = set([site[1] for group in polyA_data.values() for site in group])
     logging.info(f"Total transcripts found: {len(all_transcripts)}")
 
     for transcript_id in all_transcripts:
-        wt_sites = [site[6] for site in polyA_data['WT'] if site[1] == transcript_id]
-        mut_sites = [site[6] for site in polyA_data['MUT'] if site[1] == transcript_id]
+        wt_sites = [site[2] for site in polyA_data['WT'] if site[1] == transcript_id]
+        mut_sites = [site[2] for site in polyA_data['MUT'] if site[1] == transcript_id]
 
         if len(wt_sites) > 1 and len(mut_sites) > 1:
             u_statistic, p_value = mannwhitneyu(wt_sites, mut_sites, alternative='two-sided')
@@ -183,9 +117,6 @@ def perform_statistical_analysis(polyA_data, fdr_threshold):
     return significant_results
 
 def main():
-    """
-    Main function to orchestrate the extraction and analysis of poly(A) sites.
-    """
     args = get_args()
     
     # Setup logging to file and console
@@ -197,19 +128,15 @@ def main():
     console.setFormatter(formatter)
     logging.getLogger('').addHandler(console)
 
-    # Extract stop codon positions from GTF file
-    stop_codons = extract_stop_codon_positions(args.gtf)
-
     polyA_data = {'WT': [], 'MUT': []}
 
     for bam_file, group in zip(args.bam, args.groups):
-        polyA_sites = extract_polyA_sites(bam_file, args.fasta, stop_codons, group)
+        polyA_sites = extract_polyA_sites(bam_file, args.fasta, group)
         polyA_data[group].extend(polyA_sites)
 
     # Convert results to DataFrame
-    columns = ['Read_Name', 'TranscriptID', 'Genomic_Coordinate', 'PolyA_Start', 'PolyA_Length', 'Pre_PolyA_Sequence', 'Distance_From_Stop']
-    polyA_df_wt = pd.DataFrame(polyA_data['WT'], columns=columns)
-    polyA_df_mut = pd.DataFrame(polyA_data['MUT'], columns=columns)
+    polyA_df_wt = pd.DataFrame(polyA_data['WT'], columns=['Read_Name', 'TranscriptID', 'Genomic_Coordinate', 'PolyA_Start', 'PolyA_Length', 'Pre_PolyA_Sequence'])
+    polyA_df_mut = pd.DataFrame(polyA_data['MUT'], columns=['Read_Name', 'TranscriptID', 'Genomic_Coordinate', 'PolyA_Start', 'PolyA_Length', 'Pre_PolyA_Sequence'])
     
     # Save to TSV
     polyA_df_wt.to_csv(f"WT_{args.output}", sep='\t', index=False)
@@ -218,8 +145,8 @@ def main():
 
     # Perform global statistical comparison of poly(A) site locations
     logging.info("Starting global statistical analysis of poly(A) site locations")
-    wt_sites = polyA_df_wt['Distance_From_Stop'].values
-    mut_sites = polyA_df_mut['Distance_From_Stop'].values
+    wt_sites = polyA_df_wt['Genomic_Coordinate'].values
+    mut_sites = polyA_df_mut['Genomic_Coordinate'].values
 
     w_distance = wasserstein_distance(wt_sites, mut_sites)
     logging.info(f"Wasserstein distance between WT and MUT poly(A) sites: {w_distance}")
