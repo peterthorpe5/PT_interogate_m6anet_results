@@ -117,9 +117,7 @@ def extract_polyA_sites(bam_file, fasta_file, stop_codons, group):
         if not read.is_unmapped:
             seq = read.query_sequence
             if not isinstance(seq, str):
-                logging.warning(f"Skipping read {read.query_name} due to invalid sequence type: {type(seq)}")
-                continue
-
+                seq = str(seq)
             match = re.search(r'(A{10,})$', seq)
             
             if match:
